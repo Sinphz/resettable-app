@@ -1,6 +1,6 @@
 // Bump this release value when preparing a new app release.
 const CACHE_PREFIX = "resettable-app-";
-const CACHE_NAME = `${CACHE_PREFIX}v1.7.0`;
+const CACHE_NAME = `${CACHE_PREFIX}v1.8.0`;
 const SCOPE_URL = new URL(self.registration.scope);
 const SHELL_URL = new URL("./index.html", SCOPE_URL).href;
 
@@ -8,7 +8,7 @@ const SHELL_URL = new URL("./index.html", SCOPE_URL).href;
 const CORE_FILES = [
   "index.html",
   "styles.css",
-  "script.js?v=reset-sessions-v1",
+  "script.js?v=request-reset-v2",
   "manifest.webmanifest",
   "assets/resettable-future-logo.png",
   "assets/hero-desktop.jpg",

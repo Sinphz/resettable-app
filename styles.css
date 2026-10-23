@@ -203,9 +203,11 @@ a { color: inherit; text-decoration: none; }
 .form-heading { margin-bottom: 22px; }
 .form-heading p { margin: 12px 0 0; color: var(--muted); font-size: 12px; }
 .form-heading .enquiry-reassurance { margin-top: 8px; color: var(--deep); font-size: 11px; }
+.form-heading .service-area-note { margin-top: 8px; color: var(--muted); font-size: 11px; }
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 14px; }
 .field { display: flex; flex-direction: column; gap: 7px; margin-bottom: 16px; }
 .field label { color: var(--ink); font-size: 11px; font-weight: 700; }
+.optional-label { color: var(--muted); font-weight: 400; }
 .field input, .field select, .field textarea { width: 100%; min-height: 46px; border: 1px solid #dce1d8; border-radius: 12px; outline: none; padding: 11px 13px; color: var(--ink); background: #fff; font-size: 12px; transition: border-color .2s, box-shadow .2s; }
 .field textarea { min-height: 125px; resize: vertical; }
 .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--sage); box-shadow: 0 0 0 3px rgba(142,165,125,.18); }

@@ -18,7 +18,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
-  <script src="script.js?v=reset-sessions-v1" defer></script>
+  <script src="script.js?v=request-reset-v2" defer></script>
 </head>
 <body>
   <header class="app-header">
@@ -135,19 +135,19 @@
       <div class="request-layout">
         <form class="request-form panel" id="requestForm" action="https://formspree.io/f/mnpalzwv" method="POST">
           <input type="hidden" name="_subject" value="New Resettable enquiry">
-          <div class="form-heading"><span class="pill">LET’S GET STARTED</span><p>Share a few details and we’ll help you find the right reset.</p><p class="enquiry-reassurance">This is an enquiry, not a booking. We’ll be in touch to understand your space and discuss next steps.</p></div>
+          <div class="form-heading"><span class="pill">LET’S GET STARTED</span><p>Tell us a little about the space and what you’d like to achieve.</p><p class="service-area-note">Professional organisation and decluttering support in Islington and nearby North London. We focus on organising, not cleaning.</p><p class="enquiry-reassurance">Submitting this form is an enquiry, not a confirmed booking.</p></div>
           <div class="form-grid">
-            <div class="field"><label for="name">Your name</label><input id="name" name="name" required autocomplete="name" placeholder="Your name"></div>
-            <div class="field"><label for="email">Email address</label><input id="email" name="email" type="email" required autocomplete="email" placeholder="you@example.com"></div>
-            <div class="field"><label for="space">Type of space</label><select id="space" name="space" required><option value="">Choose an option</option><option>Home</option><option>Outdoor</option><option>Workspaces &amp; Organisations</option><option>Something else</option></select></div>
-            <div class="field"><label for="service">Preferred service</label><select id="service" name="reset_level"><option>Quick Reset</option><option>Full Reset</option><option>Not sure yet</option></select></div>
+            <div class="field"><label for="name">Name</label><input id="name" name="name" required autocomplete="name" placeholder="Your name"></div>
+            <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" required autocomplete="email" placeholder="you@example.com"></div>
+            <div class="field"><label for="space">Space</label><select id="space" name="space" required><option value="">Choose a space</option><option>Home</option><option>Outdoor</option><option>Workspaces &amp; Organisations</option><option>Something else</option></select></div>
+            <div class="field"><label for="service">Reset level</label><select id="service" name="reset_level"><option>Quick Reset</option><option>Full Reset</option><option>Not sure yet</option></select></div>
           </div>
-          <div class="field"><label for="details">Tell us about your space</label><textarea id="details" name="message" required placeholder="What would you like help organising?"></textarea></div>
+          <div class="field"><label for="details">A little more about the space <span class="optional-label">(optional)</span></label><textarea id="details" name="message" placeholder="Which space would you like help with, and what would you like to achieve?"></textarea></div>
           <button class="button button-dark submit-button" type="submit">Send Request <span aria-hidden="true">→</span></button>
           <p id="formStatus" class="form-status" role="status" aria-live="polite"></p>
           <p id="connectionStatus" class="form-note offline-notice" role="status" aria-live="polite" hidden></p>
           <p class="form-note">Your enquiry will be sent securely to Resettable.</p>
-          <p class="form-note">Prefer the website? <a href="https://resettable.co.uk/#request" target="_blank" rel="noopener">Use the Resettable website form ↗</a></p>
+          <p class="form-note">Prefer to call? <a href="tel:+442080885636">020 8088 5636</a></p>
         </form>
         <aside class="request-aside">
           <div class="request-photo" role="img" aria-label="A bright, calm living space"></div>

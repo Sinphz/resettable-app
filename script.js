@@ -1002,11 +1002,6 @@ requestForm.addEventListener("submit", async event => {
     nameField.focus();
     return;
   }
-  if (!detailsField.value.trim()) {
-    showFormStatus("Please tell us a little about your space.", "error");
-    detailsField.focus();
-    return;
-  }
   if (!navigator.onLine) {
     updateConnectionStatus();
     showFormStatus("Your enquiry wasn’t sent because you’re offline. Your details are still here; reconnect and try again.", "error");
@@ -1036,7 +1031,7 @@ requestForm.addEventListener("submit", async event => {
     }
 
     requestForm.reset();
-    showFormStatus("Thank you. Your enquiry has been sent successfully, and we’ll be in touch soon.", "success");
+    showFormStatus("Thank you — your enquiry has been sent. We appreciate you getting in touch.", "success");
   } catch {
     if (!navigator.onLine) updateConnectionStatus();
     showFormStatus(navigator.onLine
