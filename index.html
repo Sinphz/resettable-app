@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Resettable">
   <meta name="description" content="A calmer space starts with a reset. Plan your next reset and make progress room by room.">
-  <title>Resettable | My Space</title>
+  <title>Resettable | My Reset</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="assets/icons/icon-512.png">
@@ -18,18 +18,18 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
-  <script src="script.js?v=20261023-formspree" defer></script>
+  <script src="script.js?v=20261023-custom-spaces" defer></script>
 </head>
 <body>
   <header class="app-header">
     <div class="header-inner">
       <a class="brand" href="#home" data-view="home" aria-label="Resettable home">
         <img src="assets/resettable-future-logo.png" alt="Resettable">
-        <span>MY SPACE</span>
+        <span>MY RESET</span>
       </a>
       <nav class="topnav" aria-label="Main navigation">
         <button type="button" data-view="home" class="active">Home</button>
-        <button type="button" data-view="rooms">My Spaces</button>
+        <button type="button" data-view="rooms">My Reset</button>
         <button type="button" data-view="request">Request a Reset</button>
         <button type="button" data-view="about">About</button>
       </nav>
@@ -71,8 +71,8 @@
           <article class="summary-card rooms-summary">
             <div class="summary-top"><span class="summary-icon" aria-hidden="true">⌂</span><span class="summary-label">SPACES IN PROGRESS</span></div>
             <div class="metric-line"><span class="metric" id="activeSpaces">0</span><span class="metric-caption">spaces underway</span></div>
-            <p class="summary-foot">Across all 10 spaces in 3 categories.</p>
-            <button class="text-link" type="button" data-go="rooms">View my spaces <span aria-hidden="true">→</span></button>
+            <p class="summary-foot" id="spaceTotal">Across all your spaces in 3 categories.</p>
+            <button class="text-link" type="button" data-go="rooms">View My Reset <span aria-hidden="true">→</span></button>
           </article>
           <article class="summary-card support-summary">
             <div class="summary-top"><span class="summary-icon" aria-hidden="true">✳</span><span class="summary-label">A HAND WHEN YOU NEED IT</span></div>
@@ -83,7 +83,7 @@
         </div>
 
         <div class="section-heading spaces-heading">
-          <div><p class="eyebrow">CHOOSE YOUR NEXT STEP</p><h2>Explore My Spaces</h2></div>
+          <div><p class="eyebrow">CHOOSE YOUR NEXT STEP</p><h2>Explore My Reset</h2></div>
           <button class="text-link" type="button" data-go="rooms">See all spaces <span aria-hidden="true">→</span></button>
         </div>
         <div class="room-card-grid" id="categoryCards"></div>
@@ -100,13 +100,18 @@
     </section>
 
     <section id="rooms" class="view content-wrap inner-view" hidden>
-      <div class="page-intro"><p class="eyebrow">ONE STEP AT A TIME</p><h1>My Spaces</h1><p>Explore spaces across Home, Outdoor, and Workspaces &amp; Organisations.</p></div>
+      <div class="page-intro"><p class="eyebrow">ONE STEP AT A TIME</p><h1>My Reset</h1><p>Explore spaces across Home, Outdoor, and Workspaces &amp; Organisations.</p></div>
       <div class="room-tabs" id="categoryTabs" role="tablist" aria-label="Choose a category"></div>
+      <div class="space-actions"><button class="button button-dark" type="button" id="addSpaceButton">Add Your Own Space <span aria-hidden="true">＋</span></button></div>
       <div class="space-selector-grid" id="spaceCards" aria-label="Spaces in this category"></div>
       <div class="checklist-layout">
         <article class="panel checklist-panel">
           <div class="panel-heading"><span class="pill">YOUR CHECKLIST</span><span class="room-counter" id="roomCount"></span></div>
           <h2 id="roomTitle"></h2><p class="room-description" id="roomDescription"></p>
+          <div class="custom-space-controls" id="customSpaceControls" hidden>
+            <button class="text-link" type="button" id="editCustomSpace">Edit space &amp; tasks</button>
+            <button class="text-link delete-space-link" type="button" id="deleteCustomSpace">Delete space</button>
+          </div>
           <div class="task-list" id="tasks"></div>
           <button class="reset-checklist" id="clearRoom" type="button">↺ <span>Reset this checklist</span></button>
         </article>
@@ -160,9 +165,20 @@
   <footer class="app-footer"><div class="footer-inner"><span>© Resettable · Organisation &amp; Decluttering</span><a href="https://resettable.co.uk" target="_blank" rel="noopener">Visit resettable.co.uk ↗</a></div></footer>
   <nav class="mobile-nav" aria-label="Mobile navigation">
     <button type="button" data-view="home" class="active"><span aria-hidden="true">⌂</span>Home</button>
-    <button type="button" data-view="rooms"><span aria-hidden="true">▦</span>My Spaces</button>
+    <button type="button" data-view="rooms"><span aria-hidden="true">▦</span>My Reset</button>
     <button type="button" data-view="request"><span aria-hidden="true">＋</span>Request</button>
     <button type="button" data-view="about"><span aria-hidden="true">✳</span>About</button>
   </nav>
+  <dialog class="space-dialog" id="spaceDialog" aria-labelledby="spaceDialogTitle">
+    <form class="space-dialog-form" id="customSpaceForm">
+      <div class="space-dialog-heading"><div><p class="eyebrow">MAKE IT YOURS</p><h2 id="spaceDialogTitle">Add Your Own Space</h2></div><button class="dialog-close" type="button" id="closeSpaceDialog" aria-label="Close">×</button></div>
+      <div class="field"><label for="customSpaceName">Space name</label><input id="customSpaceName" name="customSpaceName" maxlength="60" required placeholder="For example, My Loft"></div>
+      <div class="field"><label for="customSpaceCategory">Category</label><select id="customSpaceCategory" name="customSpaceCategory" required></select></div>
+      <div class="custom-task-heading"><div><h3>Checklist tasks</h3><p>Add the steps you want to complete in this space.</p></div><button class="add-task-button" type="button" id="addCustomTask">＋ Add a task</button></div>
+      <div id="customTaskFields" class="custom-task-fields"></div>
+      <p id="customSpaceStatus" class="form-status" role="status" aria-live="polite"></p>
+      <div class="space-dialog-actions"><button class="button button-soft" type="button" id="cancelSpaceDialog">Cancel</button><button class="button button-dark" type="submit" id="saveCustomSpace">Create space</button></div>
+    </form>
+  </dialog>
 </body>
 </html>

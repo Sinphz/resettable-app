@@ -119,6 +119,7 @@ const rooms = [
 ];
 
 const storageKey = "resettable-checklist-v1";
+const customSpacesStorageKey = "resettable-custom-spaces-v1";
 let saved = {};
 try {
   saved = JSON.parse(localStorage.getItem(storageKey) || "{}");
@@ -127,17 +128,60 @@ try {
   saved = {};
 }
 
+function createId(prefix) {
+  const random = globalThis.crypto?.randomUUID?.() || `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+  return `${prefix}-${random}`;
+}
+
+let customSpaces = [];
+try {
+  const parsed = JSON.parse(localStorage.getItem(customSpacesStorageKey) || "[]");
+  if (Array.isArray(parsed)) customSpaces = parsed
+    .filter(space => space && typeof space.id === "string" && typeof space.name === "string"
+      && categories.some(category => category.id === space.category) && Array.isArray(space.tasks))
+    .map(space => ({
+      id: space.id,
+      name: space.name.slice(0, 60),
+      category: space.category,
+      description: "A space you created, with a checklist made for you.",
+      emoji: "✳",
+      tasks: space.tasks.filter(task => task && typeof task.text === "string" && task.text.trim())
+        .map(task => ({ id: typeof task.id === "string" ? task.id : createId("task"), text: task.text.trim().slice(0, 160), done: Boolean(task.done) }))
+    }));
+} catch {
+  customSpaces = [];
+}
+
 let currentCategory = "home";
 let currentRoom = "kitchen";
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
 
-function isDone(roomId, taskIndex) {
-  return Boolean(saved[`${roomId}-${taskIndex}`]);
+function allSpaces() {
+  return [...rooms.map(room => ({ ...room, isCustom: false })), ...customSpaces.map(space => ({ ...space, isCustom: true }))];
+}
+
+function getSpace(spaceId) {
+  const room = rooms.find(item => item.id === spaceId);
+  if (room) return { ...room, isCustom: false };
+  const customSpace = customSpaces.find(item => item.id === spaceId);
+  return customSpace ? { ...customSpace, isCustom: true } : null;
+}
+
+function isDone(room, taskIndex) {
+  return room.isCustom ? Boolean(room.tasks[taskIndex]?.done) : Boolean(saved[`${room.id}-${taskIndex}`]);
 }
 
 function completedCount(room) {
-  return room.tasks.reduce((total, _, index) => total + Number(isDone(room.id, index)), 0);
+  return room.tasks.reduce((total, _, index) => total + Number(isDone(room, index)), 0);
+}
+
+function saveCustomSpaces() {
+  try {
+    localStorage.setItem(customSpacesStorageKey, JSON.stringify(customSpaces));
+  } catch {
+    // Keep the checklist usable if this browser blocks local storage.
+  }
 }
 
 function saveProgress() {
@@ -156,7 +200,7 @@ function updateProgressbar(element, percent) {
 }
 
 function categoryRooms(categoryId) {
-  return rooms.filter(room => room.category === categoryId);
+  return allSpaces().filter(room => room.category === categoryId);
 }
 
 function categoryProgress(categoryId) {
@@ -167,16 +211,18 @@ function categoryProgress(categoryId) {
 }
 
 function renderDashboard() {
-  const complete = rooms.reduce((total, room) => total + completedCount(room), 0);
-  const possible = rooms.reduce((total, room) => total + room.tasks.length, 0);
-  const percent = Math.round((complete / possible) * 100);
+  const spaces = allSpaces();
+  const complete = spaces.reduce((total, room) => total + completedCount(room), 0);
+  const possible = spaces.reduce((total, room) => total + room.tasks.length, 0);
+  const percent = possible ? Math.round((complete / possible) * 100) : 0;
 
   $("#overall").textContent = `${percent}%`;
   updateProgressbar($("#overallbar"), percent);
-  $("#activeSpaces").textContent = rooms.filter(room => {
+  $("#activeSpaces").textContent = spaces.filter(room => {
     const count = completedCount(room);
     return count > 0 && count < room.tasks.length;
   }).length;
+  $("#spaceTotal").textContent = `Across all ${spaces.length} spaces in 3 categories.`;
 
   $("#categoryCards").replaceChildren(...categories.map(category => {
     const group = categoryRooms(category.id);
@@ -213,7 +259,7 @@ function renderDashboard() {
     const explore = document.createElement("button");
     explore.className = "room-card-action";
     explore.type = "button";
-    explore.innerHTML = "Explore Spaces <span aria-hidden=\"true\">→</span>";
+    explore.innerHTML = "Open My Reset <span aria-hidden=\"true\">→</span>";
     explore.addEventListener("click", () => openCategory(category.id));
 
     card.append(top, title, description, barTrack, explore);
@@ -238,7 +284,7 @@ function renderSpaceCards() {
   const group = categoryRooms(currentCategory);
   $("#spaceCards").replaceChildren(...group.map(room => {
     const count = completedCount(room);
-    const percent = Math.round((count / room.tasks.length) * 100);
+    const percent = room.tasks.length ? Math.round((count / room.tasks.length) * 100) : 0;
     const card = document.createElement("button");
     card.type = "button";
     card.className = "space-choice";
@@ -295,7 +341,7 @@ function openCategory(categoryId) {
 }
 
 function renderRoom() {
-  const room = rooms.find(item => item.id === currentRoom) || rooms[0];
+  const room = getSpace(currentRoom) || rooms[0];
   currentRoom = room.id;
   currentCategory = room.category;
   renderCategoryTabs();
@@ -303,6 +349,7 @@ function renderRoom() {
 
   $("#roomTitle").textContent = `${room.emoji} ${room.name}`;
   $("#roomDescription").textContent = room.description;
+  $("#customSpaceControls").hidden = !room.isCustom;
   $("#tasks").replaceChildren(...room.tasks.map((task, index) => {
     const row = document.createElement("div");
     row.className = "task";
@@ -310,15 +357,21 @@ function renderRoom() {
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
     checkbox.id = id;
-    checkbox.checked = isDone(room.id, index);
+    checkbox.checked = isDone(room, index);
     checkbox.addEventListener("change", () => {
-      saved[`${room.id}-${index}`] = checkbox.checked;
-      saveProgress();
+      if (room.isCustom) {
+        const customSpace = customSpaces.find(item => item.id === room.id);
+        if (customSpace?.tasks[index]) customSpace.tasks[index].done = checkbox.checked;
+        saveCustomSpaces();
+      } else {
+        saved[`${room.id}-${index}`] = checkbox.checked;
+        saveProgress();
+      }
       refreshProgress();
     });
     const label = document.createElement("label");
     label.htmlFor = id;
-    label.textContent = task;
+    label.textContent = room.isCustom ? task.text : task;
     row.append(checkbox, label);
     return row;
   }));
@@ -326,9 +379,9 @@ function renderRoom() {
 }
 
 function refreshRoomProgress() {
-  const room = rooms.find(item => item.id === currentRoom) || rooms[0];
+  const room = getSpace(currentRoom) || rooms[0];
   const count = completedCount(room);
-  const percent = Math.round((count / room.tasks.length) * 100);
+  const percent = room.tasks.length ? Math.round((count / room.tasks.length) * 100) : 0;
   $("#roomPercent").textContent = `${percent}%`;
   $("#roomCount").textContent = `${count} of ${room.tasks.length} completed`;
   updateProgressbar($("#roombar"), percent);
@@ -344,6 +397,122 @@ function refreshProgress() {
   renderSpaceCards();
   refreshRoomProgress();
 }
+
+const spaceDialog = $("#spaceDialog");
+const customSpaceForm = $("#customSpaceForm");
+const customTaskFields = $("#customTaskFields");
+let editingSpaceId = null;
+
+function addCustomTaskField(task = null, taskNumber = customTaskFields.children.length + 1) {
+  const row = document.createElement("div");
+  row.className = "custom-task-entry";
+  if (task?.id) row.dataset.taskId = task.id;
+  const input = document.createElement("input");
+  input.type = "text";
+  input.maxLength = 160;
+  input.required = true;
+  input.placeholder = "For example, sort one shelf";
+  input.value = task?.text || "";
+  input.setAttribute("aria-label", `Checklist task ${taskNumber}`);
+  const remove = document.createElement("button");
+  remove.type = "button";
+  remove.className = "remove-task-button";
+  remove.textContent = "×";
+  remove.setAttribute("aria-label", `Remove checklist task ${taskNumber}`);
+  remove.addEventListener("click", () => row.remove());
+  row.append(input, remove);
+  customTaskFields.append(row);
+}
+
+function openSpaceDialog(space = null) {
+  editingSpaceId = space?.id || null;
+  customSpaceForm.reset();
+  customTaskFields.replaceChildren();
+  $("#customSpaceStatus").textContent = "";
+  $("#spaceDialogTitle").textContent = space ? "Edit Your Space" : "Add Your Own Space";
+  $("#saveCustomSpace").textContent = space ? "Save changes" : "Create space";
+  $("#customSpaceName").value = space?.name || "";
+  const categorySelect = $("#customSpaceCategory");
+  categorySelect.replaceChildren(...categories.map(category => {
+    const option = document.createElement("option");
+    option.value = category.id;
+    option.textContent = category.name;
+    option.selected = category.id === (space?.category || currentCategory);
+    return option;
+  }));
+  if (space) space.tasks.forEach((task, index) => addCustomTaskField(task, index + 1));
+  else addCustomTaskField();
+  spaceDialog.showModal();
+  window.setTimeout(() => $("#customSpaceName").focus(), 50);
+}
+
+$("#addSpaceButton").addEventListener("click", () => openSpaceDialog());
+$("#editCustomSpace").addEventListener("click", () => {
+  const space = customSpaces.find(item => item.id === currentRoom);
+  if (space) openSpaceDialog(space);
+});
+$("#addCustomTask").addEventListener("click", () => addCustomTaskField());
+$("#closeSpaceDialog").addEventListener("click", () => spaceDialog.close());
+$("#cancelSpaceDialog").addEventListener("click", () => spaceDialog.close());
+
+customSpaceForm.addEventListener("submit", event => {
+  event.preventDefault();
+  if (!customSpaceForm.reportValidity()) return;
+  const taskRows = [...customTaskFields.querySelectorAll(".custom-task-entry")];
+  if (!taskRows.length) {
+    $("#customSpaceStatus").textContent = "Add at least one checklist task to create your space.";
+    return;
+  }
+  const existingSpace = customSpaces.find(space => space.id === editingSpaceId);
+  const tasks = taskRows.map(row => {
+    const oldTask = existingSpace?.tasks.find(task => task.id === row.dataset.taskId);
+    return {
+      id: oldTask?.id || createId("task"),
+      text: row.querySelector("input").value.trim(),
+      done: oldTask?.done || false
+    };
+  });
+  if (tasks.some(task => !task.text)) {
+    $("#customSpaceStatus").textContent = "Please fill in each task, or remove any empty task rows.";
+    return;
+  }
+  const category = $("#customSpaceCategory").value;
+  const name = $("#customSpaceName").value.trim();
+  if (!name) {
+    $("#customSpaceStatus").textContent = "Please enter a name for your space.";
+    $("#customSpaceName").focus();
+    return;
+  }
+  if (existingSpace) {
+    existingSpace.name = name;
+    existingSpace.category = category;
+    existingSpace.tasks = tasks;
+    currentRoom = existingSpace.id;
+  } else {
+    const newSpace = {
+      id: createId("space"), name, category,
+      description: "A space you created, with a checklist made for you.",
+      emoji: "✳", tasks
+    };
+    customSpaces.push(newSpace);
+    currentRoom = newSpace.id;
+  }
+  currentCategory = category;
+  saveCustomSpaces();
+  spaceDialog.close();
+  renderDashboard();
+  renderRoom();
+});
+
+$("#deleteCustomSpace").addEventListener("click", () => {
+  const space = customSpaces.find(item => item.id === currentRoom);
+  if (!space || !window.confirm(`Delete “${space.name}” and its checklist? This cannot be undone.`)) return;
+  customSpaces = customSpaces.filter(item => item.id !== space.id);
+  saveCustomSpaces();
+  currentRoom = categoryRooms(currentCategory)[0]?.id || rooms[0].id;
+  renderDashboard();
+  renderRoom();
+});
 
 function showView(viewId) {
   const view = document.getElementById(viewId);
@@ -381,11 +550,16 @@ $$('[data-category]').forEach(button => {
 });
 
 $("#clearRoom").addEventListener("click", () => {
-  const room = rooms.find(item => item.id === currentRoom);
+  const room = getSpace(currentRoom);
   if (!room || !window.confirm(`Clear completed tasks for ${room.name}?`)) return;
 
-  room.tasks.forEach((_, index) => delete saved[`${room.id}-${index}`]);
-  saveProgress();
+  if (room.isCustom) {
+    room.tasks.forEach(task => { task.done = false; });
+    saveCustomSpaces();
+  } else {
+    room.tasks.forEach((_, index) => delete saved[`${room.id}-${index}`]);
+    saveProgress();
+  }
   renderDashboard();
   renderRoom();
 });
