@@ -142,6 +142,21 @@ a { color: inherit; text-decoration: none; }
 .goal-actions { margin-top: 8px; }
 .goal-editor .goal-actions { margin-top: 10px; }
 .goal-save { min-height: 40px; padding: 0 15px; font-size: 11px; }
+.reset-session-area { margin-top: 14px; }
+.reset-session { border: 1px solid rgba(15,59,39,.08); border-radius: 14px; padding: 13px; background: #f8f7f1; }
+.reset-session-title { margin: 0; color: var(--deep); font: 500 18px/1.2 "Playfair Display", Georgia, serif; }
+.session-prompt, .session-details { margin: 5px 0 0; color: var(--muted); font-size: 10px; }
+.session-duration-options { display: flex; gap: 7px; margin-top: 10px; }
+.session-duration { min-width: 0; min-height: 44px; flex: 1; border: 1px solid #dce1d8; border-radius: 11px; padding: 0 7px; color: var(--deep); background: var(--paper); cursor: pointer; font-size: 10px; font-weight: 600; }
+.session-duration[aria-pressed="true"] { border-color: var(--sage); background: #edf1e9; box-shadow: inset 0 0 0 1px var(--sage); }
+.session-start { width: 100%; min-height: 44px; margin-top: 9px; }
+.session-countdown { margin: 5px 0 8px; color: var(--deep); font: 500 32px/.98 "Playfair Display", Georgia, serif; letter-spacing: .02em; }
+.session-controls { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 9px; }
+.session-control { min-height: 44px; flex: 1 1 110px; border: 1px solid rgba(15,59,39,.15); border-radius: 999px; padding: 0 13px; color: var(--deep); background: var(--paper); cursor: pointer; font-size: 11px; font-weight: 700; }
+.session-resume { border-color: var(--deep); color: white; background: var(--deep); }
+.session-end { color: #81423b; }
+.session-message { margin: 4px 0 0; color: var(--muted); font-size: 10px; }
+.session-completed { color: var(--deep); font-weight: 600; }
 .custom-space-controls { display: flex; flex-wrap: wrap; gap: 17px; margin-top: 11px; }
 .delete-space-link { color: #8a4139; }
 .task-list { margin-top: 20px; }

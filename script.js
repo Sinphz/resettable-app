@@ -121,6 +121,7 @@ const rooms = [
 const storageKey = "resettable-checklist-v1";
 const customSpacesStorageKey = "resettable-custom-spaces-v1";
 const spaceGoalsStorageKey = "resettable-space-goals-v1";
+const resetSessionStorageKey = "resettable-reset-session-v1";
 let saved = {};
 try {
   saved = JSON.parse(localStorage.getItem(storageKey) || "{}");
@@ -168,9 +169,45 @@ try {
   spaceGoals = {};
 }
 
+const allowedSessionDurations = [10, 15, 30];
+let resetSession = null;
+try {
+  const parsedSession = JSON.parse(localStorage.getItem(resetSessionStorageKey) || "null");
+  const validSpaceIds = new Set([...rooms, ...customSpaces].map(space => space.id));
+  if (parsedSession && typeof parsedSession === "object"
+      && validSpaceIds.has(parsedSession.spaceId)
+      && allowedSessionDurations.includes(parsedSession.durationMinutes)) {
+    if (parsedSession.status === "running" && Number.isFinite(parsedSession.endAt)) {
+      resetSession = {
+        spaceId: parsedSession.spaceId,
+        durationMinutes: parsedSession.durationMinutes,
+        status: "running",
+        endAt: parsedSession.endAt
+      };
+    } else if (parsedSession.status === "paused" && Number.isFinite(parsedSession.remainingMs)) {
+      resetSession = {
+        spaceId: parsedSession.spaceId,
+        durationMinutes: parsedSession.durationMinutes,
+        status: "paused",
+        remainingMs: Math.min(parsedSession.durationMinutes * 60 * 1000, Math.max(0, parsedSession.remainingMs))
+      };
+    } else if (parsedSession.status === "completed") {
+      resetSession = {
+        spaceId: parsedSession.spaceId,
+        durationMinutes: parsedSession.durationMinutes,
+        status: "completed"
+      };
+    }
+  }
+} catch {
+  resetSession = null;
+}
+
 let currentCategory = "home";
 let currentRoom = "kitchen";
 let goalEditorSpaceId = null;
+let selectedSessionDuration = 10;
+let sessionTicker = null;
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
 
@@ -213,6 +250,15 @@ function saveProgress() {
 function saveSpaceGoals() {
   try {
     localStorage.setItem(spaceGoalsStorageKey, JSON.stringify(spaceGoals));
+  } catch {
+    // Keep the checklist usable if this browser blocks local storage.
+  }
+}
+
+function saveResetSession() {
+  try {
+    if (resetSession) localStorage.setItem(resetSessionStorageKey, JSON.stringify(resetSession));
+    else localStorage.removeItem(resetSessionStorageKey);
   } catch {
     // Keep the checklist usable if this browser blocks local storage.
   }
@@ -376,6 +422,7 @@ function renderRoom() {
   $("#roomTitle").textContent = `${room.emoji} ${room.name}`;
   $("#roomDescription").textContent = room.description;
   renderGoal(room);
+  renderResetSession(room);
   $("#customSpaceControls").hidden = !room.isCustom;
   $("#tasks").replaceChildren(...room.tasks.map((task, index) => {
     const row = document.createElement("div");
@@ -505,6 +552,220 @@ function renderGoal(space) {
   actions.append(edit, remove);
   savedGoal.append(label, text, actions);
   goalArea.append(savedGoal);
+}
+
+function sessionRemainingMs(session = resetSession) {
+  if (!session) return 0;
+  if (session.status === "running") return Math.max(0, session.endAt - Date.now());
+  if (session.status === "paused") return Math.max(0, session.remainingMs);
+  return 0;
+}
+
+function formatSessionTime(milliseconds) {
+  const seconds = Math.ceil(milliseconds / 1000);
+  const minutesPart = Math.floor(seconds / 60);
+  const secondsPart = seconds % 60;
+  return `${String(minutesPart).padStart(2, "0")}:${String(secondsPart).padStart(2, "0")}`;
+}
+
+function sessionTimeLabel(milliseconds) {
+  const seconds = Math.ceil(milliseconds / 1000);
+  const minutesPart = Math.floor(seconds / 60);
+  const secondsPart = seconds % 60;
+  return `${minutesPart} minute${minutesPart === 1 ? "" : "s"} and ${secondsPart} second${secondsPart === 1 ? "" : "s"} remaining`;
+}
+
+function setSessionState(nextState) {
+  resetSession = nextState;
+  saveResetSession();
+  syncSessionTicker();
+  renderResetSession(getSpace(currentRoom) || rooms[0]);
+}
+
+function makeSessionButton(text, className, action, label = text) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = className;
+  button.textContent = text;
+  button.setAttribute("aria-label", label);
+  button.addEventListener("click", action);
+  return button;
+}
+
+function renderResetSession(space) {
+  if (resetSession?.status === "running" && sessionRemainingMs() <= 0) {
+    resetSession = { spaceId: resetSession.spaceId, durationMinutes: resetSession.durationMinutes, status: "completed" };
+    saveResetSession();
+    syncSessionTicker();
+  } else if (resetSession?.status === "paused" && resetSession.remainingMs <= 0) {
+    resetSession = { spaceId: resetSession.spaceId, durationMinutes: resetSession.durationMinutes, status: "completed" };
+    saveResetSession();
+  }
+  const area = $("#resetSessionArea");
+  area.replaceChildren();
+  const section = document.createElement("section");
+  section.className = "reset-session";
+  section.setAttribute("aria-labelledby", "resetSessionTitle");
+  const title = document.createElement("h3");
+  title.id = "resetSessionTitle";
+  title.className = "reset-session-title";
+  title.textContent = "Reset Session";
+  section.append(title);
+
+  if (!resetSession) {
+    const prompt = document.createElement("p");
+    prompt.className = "session-prompt";
+    prompt.textContent = "Choose a little time to focus on this space.";
+    const options = document.createElement("div");
+    options.className = "session-duration-options";
+    options.setAttribute("role", "group");
+    options.setAttribute("aria-label", "Choose session duration");
+    for (const duration of allowedSessionDurations) {
+      const option = makeSessionButton(`${duration} minutes`, "session-duration", () => {
+        selectedSessionDuration = duration;
+        for (const choice of options.children) {
+          choice.setAttribute("aria-pressed", String(Number(choice.dataset.duration) === selectedSessionDuration));
+        }
+      });
+      option.dataset.duration = String(duration);
+      option.setAttribute("aria-pressed", String(duration === selectedSessionDuration));
+      options.append(option);
+    }
+    const start = makeSessionButton("Start Session", "button button-dark session-start", () => {
+      if (resetSession) return;
+      const startedAt = Date.now();
+      setSessionState({
+        spaceId: space.id,
+        durationMinutes: selectedSessionDuration,
+        status: "running",
+        endAt: startedAt + selectedSessionDuration * 60 * 1000
+      });
+    });
+    section.append(prompt, options, start);
+  } else {
+    const sessionSpace = getSpace(resetSession.spaceId);
+    if (!sessionSpace) {
+      setSessionState(null);
+      return;
+    }
+    const details = document.createElement("p");
+    details.className = "session-details";
+    details.textContent = `${resetSession.durationMinutes}-minute session for ${sessionSpace.name}`;
+    const countdown = document.createElement("div");
+    countdown.className = "session-countdown";
+    countdown.setAttribute("role", "timer");
+    countdown.setAttribute("aria-live", "off");
+    const actions = document.createElement("div");
+    actions.className = "session-controls";
+
+    if (resetSession.status === "running") {
+      const remaining = sessionRemainingMs();
+      countdown.textContent = formatSessionTime(remaining);
+      countdown.setAttribute("aria-label", sessionTimeLabel(remaining));
+      actions.append(
+        makeSessionButton("Pause", "session-control", () => pauseResetSession()),
+        makeSessionButton("End Session", "session-control session-end", () => setSessionState(null))
+      );
+    } else if (resetSession.status === "paused") {
+      const remaining = sessionRemainingMs();
+      countdown.textContent = formatSessionTime(remaining);
+      countdown.setAttribute("aria-label", `Paused, ${sessionTimeLabel(remaining)}`);
+      const paused = document.createElement("p");
+      paused.className = "session-message";
+      paused.setAttribute("role", "status");
+      paused.textContent = `Paused${sessionSpace.id === space.id ? "" : ` · This session belongs to ${sessionSpace.name}`}`;
+      actions.append(
+        makeSessionButton("Resume", "session-control session-resume", () => resumeResetSession()),
+        makeSessionButton("End Session", "session-control session-end", () => setSessionState(null))
+      );
+      section.append(details, countdown, paused, actions);
+      area.append(section);
+      return;
+    } else {
+      countdown.textContent = "00:00";
+      countdown.setAttribute("aria-label", "Session complete");
+      const completed = document.createElement("p");
+      completed.className = "session-message session-completed";
+      completed.setAttribute("role", "status");
+      completed.textContent = `Lovely work! Every little reset counts. This session was for ${sessionSpace.name}.`;
+      actions.append(makeSessionButton("Done", "session-control session-resume", () => setSessionState(null)));
+      section.append(details, countdown, completed, actions);
+      area.append(section);
+      return;
+    }
+
+    if (sessionSpace.id !== space.id) {
+      const belongs = document.createElement("p");
+      belongs.className = "session-message";
+      belongs.textContent = `This session belongs to ${sessionSpace.name}.`;
+      section.append(details, belongs, countdown, actions);
+    } else {
+      section.append(details, countdown, actions);
+    }
+  }
+
+  area.append(section);
+}
+
+function pauseResetSession() {
+  if (!resetSession || resetSession.status !== "running") return;
+  const remainingMs = sessionRemainingMs();
+  if (remainingMs <= 0) {
+    completeResetSession();
+    return;
+  }
+  setSessionState({
+    spaceId: resetSession.spaceId,
+    durationMinutes: resetSession.durationMinutes,
+    status: "paused",
+    remainingMs
+  });
+}
+
+function resumeResetSession() {
+  if (!resetSession || resetSession.status !== "paused") return;
+  const remainingMs = sessionRemainingMs();
+  if (remainingMs <= 0) {
+    completeResetSession();
+    return;
+  }
+  setSessionState({
+    spaceId: resetSession.spaceId,
+    durationMinutes: resetSession.durationMinutes,
+    status: "running",
+    endAt: Date.now() + remainingMs
+  });
+}
+
+function completeResetSession() {
+  if (!resetSession) return;
+  setSessionState({
+    spaceId: resetSession.spaceId,
+    durationMinutes: resetSession.durationMinutes,
+    status: "completed"
+  });
+}
+
+function updateSessionCountdown() {
+  if (!resetSession || resetSession.status !== "running") return;
+  const remainingMs = sessionRemainingMs();
+  if (remainingMs <= 0) {
+    completeResetSession();
+    return;
+  }
+  const countdown = $(".session-countdown");
+  if (countdown) {
+    countdown.textContent = formatSessionTime(remainingMs);
+    countdown.setAttribute("aria-label", sessionTimeLabel(remainingMs));
+  }
+}
+
+function syncSessionTicker() {
+  if (sessionTicker) window.clearInterval(sessionTicker);
+  sessionTicker = null;
+  if (resetSession?.status === "running") {
+    sessionTicker = window.setInterval(updateSessionCountdown, 1000);
+  }
 }
 
 function refreshRoomProgress() {
@@ -640,6 +901,11 @@ $("#deleteCustomSpace").addEventListener("click", () => {
   saveCustomSpaces();
   delete spaceGoals[space.id];
   saveSpaceGoals();
+  if (resetSession?.spaceId === space.id) {
+    resetSession = null;
+    saveResetSession();
+    syncSessionTicker();
+  }
   currentRoom = categoryRooms(currentCategory)[0]?.id || rooms[0].id;
   renderDashboard();
   renderRoom();
@@ -795,5 +1061,12 @@ if ("serviceWorker" in navigator) {
   });
 }
 
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) updateSessionCountdown();
+});
+window.addEventListener("pageshow", updateSessionCountdown);
+window.addEventListener("focus", updateSessionCountdown);
+
 renderDashboard();
 renderRoom();
+syncSessionTicker();
