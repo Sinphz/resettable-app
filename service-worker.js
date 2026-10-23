@@ -1,6 +1,6 @@
 // Bump this release value when preparing a new app release.
 const CACHE_PREFIX = "resettable-app-";
-const CACHE_NAME = `${CACHE_PREFIX}v1.1.0`;
+const CACHE_NAME = `${CACHE_PREFIX}v1.3.0`;
 const SCOPE_URL = new URL(self.registration.scope);
 const SHELL_URL = new URL("./index.html", SCOPE_URL).href;
 
@@ -17,9 +17,9 @@ const CORE_FILES = [
   "assets/home-card.jpg",
   "assets/outdoor-card.jpg",
   "assets/workspaces-card.jpg",
-  "assets/icons/icon-192.png",
-  "assets/icons/icon-512.png",
-  "assets/icons/apple-touch-icon.png"
+  "assets/icons/icon-192-v3.png",
+  "assets/icons/icon-512-v3.png",
+  "assets/icons/apple-touch-icon-v3.png"
 ];
 const CORE_URLS = CORE_FILES.map(path => new URL(path, SCOPE_URL).href);
 

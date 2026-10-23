@@ -546,7 +546,12 @@ $$('[data-go]').forEach(button => {
 });
 
 $$('[data-category]').forEach(button => {
-  button.addEventListener("click", () => openCategory(button.dataset.category));
+  button.addEventListener("click", () => {
+    const category = categories.find(item => item.id === button.dataset.category);
+    if (!category) return;
+    $("#space").value = category.name;
+    showView("request");
+  });
 });
 
 $("#clearRoom").addEventListener("click", () => {
