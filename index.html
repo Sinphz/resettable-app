@@ -1,7 +1,158 @@
 <!doctype html>
-<html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#254c3e"><meta name="description" content="Resettable — a calmer space starts with a reset."><title>Resettable | My Space</title><link rel="manifest" href="manifest.webmanifest"><style>
-:root{--green:#254c3e;--mint:#dfeae1;--cream:#f8f7f2;--ink:#23342d;--muted:#6c7971;--line:#e1e6df}*{box-sizing:border-box}body{margin:0;background:var(--cream);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}.shell{max-width:1120px;margin:auto;padding:0 22px}.top{background:white;border-bottom:1px solid var(--line)}.top .shell{height:82px;display:flex;align-items:center;justify-content:space-between;gap:15px}.logo{font-family:Georgia,serif;color:var(--green);font-size:31px;letter-spacing:-1.5px;font-weight:bold;text-decoration:none}.logo span{font-size:12px;display:block;font-family:inherit;letter-spacing:2px;font-weight:normal;text-align:center}.topnav{display:flex;gap:8px;align-items:center}.topnav button{border:0;background:transparent;color:var(--ink);padding:12px;border-radius:20px}.topnav button.active{background:var(--mint);color:var(--green);font-weight:700}.hero{background:var(--green);color:white;padding:58px 0 62px}.eyebrow{text-transform:uppercase;letter-spacing:2.5px;font-size:11px;font-weight:700;opacity:.8}.hero h1{font-family:Georgia,serif;font-size:clamp(35px,5vw,58px);font-weight:normal;max-width:700px;line-height:1.1;margin:18px 0}.hero p{max-width:560px;color:#e2e9e1;line-height:1.7}.btn{border:0;border-radius:30px;padding:13px 21px;background:var(--green);color:white;font-weight:650}.btn.light{background:#f0eadd;color:var(--green)}.btn.outline{background:white;color:var(--green);border:1px solid #c8d8ce}.hero .btn{margin-top:12px}main{padding:36px 0 80px}.sectionhead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:10px 0 19px}.sectionhead h2{font-family:Georgia,serif;font-size:29px;font-weight:normal;margin:0}.small{font-size:13px;color:var(--muted)}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.card{background:white;border:1px solid var(--line);border-radius:18px;padding:23px;box-shadow:0 4px 18px #244c3e08}.card h3{font-family:Georgia,serif;font-size:22px;font-weight:normal;margin:12px 0}.card p{color:var(--muted);line-height:1.6;font-size:14px}.metric{font-size:35px;color:var(--green);font-family:Georgia,serif}.pill{display:inline-block;background:var(--mint);color:var(--green);font-size:11px;letter-spacing:1px;text-transform:uppercase;border-radius:15px;padding:7px 11px}.progress{height:9px;border-radius:20px;background:#e9eee8;overflow:hidden;margin:15px 0}.progress>div{height:100%;background:#739a80;transition:width .2s}.roomgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:17px}.task{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--line)}.task:last-child{border:0}.task input{accent-color:var(--green);width:18px;height:18px;margin-top:3px}.task label{line-height:1.45}.task:has(input:checked) label{text-decoration:line-through;color:var(--muted)}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px}.tabs button{border:1px solid var(--line);background:white;border-radius:30px;padding:10px 16px;color:var(--green)}.tabs button.active{background:var(--green);color:white}.form{max-width:700px;background:white;padding:27px;border-radius:18px;border:1px solid var(--line)}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.field{display:flex;flex-direction:column;gap:7px;margin-bottom:17px}.field label{font-weight:650;font-size:13px}.field input,.field select,.field textarea{border:1px solid #cdd9d0;border-radius:10px;padding:13px;background:white;color:var(--ink);width:100%}.field textarea{min-height:115px;resize:vertical}.note{font-size:13px;color:var(--muted);line-height:1.6}.footer{border-top:1px solid var(--line);padding:26px 0;color:var(--muted);font-size:13px}.footer .shell{display:flex;justify-content:space-between;gap:15px;flex-wrap:wrap}.footer a{color:var(--green)}[hidden]{display:none!important}@media(max-width:750px){.top .shell{height:auto;min-height:76px;flex-wrap:wrap;padding-top:12px;padding-bottom:12px}.topnav{width:100%;overflow:auto}.topnav button{white-space:nowrap;font-size:13px}.hero{padding:43px 0}.cards,.roomgrid{grid-template-columns:1fr}.formgrid{grid-template-columns:1fr}.shell{padding-left:18px;padding-right:18px}}
-</style></head><body><header class="top"><div class="shell"><a class="logo" href="#home">Resettable<span>ORGANISATION & DECLUTTERING</span></a><nav class="topnav" aria-label="Main navigation"><button data-view="home" class="active">Home</button><button data-view="rooms">My Spaces</button><button data-view="request">Request a Reset</button><button data-view="about">About</button></nav></div></header><section class="hero"><div class="shell"><div class="eyebrow">Welcome to your calmer space</div><h1>A little progress.<br>A lot more breathing room.</h1><p>Plan your next reset, make progress room by room, and find support whenever you need it.</p><button class="btn light" data-go="rooms">Start organising →</button></div></section><main class="shell"><section id="home" class="view"><div class="sectionhead"><h2>Your reset at a glance</h2><span class="small">Your progress stays on this device</span></div><div class="cards"><article class="card"><span class="pill">Your journey</span><h3>Overall progress</h3><div class="metric" id="overall">0%</div><div class="progress"><div id="overallbar"></div></div><p>Every small step counts.</p></article><article class="card"><span class="pill">Your spaces</span><h3>Rooms in progress</h3><div class="metric" id="activeRooms">0</div><p>Kitchen, bedroom, living room and workspace.</p></article><article class="card"><span class="pill">Need a hand?</span><h3>Let us do the heavy lifting</h3><p>Explore our Quick Reset and Full Reset services, tailored to your space.</p><button class="btn" data-go="request">Request a Reset →</button></article></div><div class="sectionhead" style="margin-top:38px"><h2>Where would you like to begin?</h2></div><div class="cards" id="roomCards"></div></section><section id="rooms" class="view" hidden><div class="sectionhead"><h2>My Spaces</h2><span class="small">Tick off tasks as you go</span></div><div class="tabs" id="roomTabs"></div><div class="roomgrid"><div class="card"><span class="pill">Your checklist</span><h3 id="roomTitle"></h3><p id="roomDescription"></p><div id="tasks"></div></div><div class="card"><span class="pill">One step at a time</span><h3>You're making space for better days.</h3><div class="metric" id="roomPercent">0%</div><div class="progress"><div id="roombar"></div></div><p id="roomCount"></p><button class="btn outline" id="clearRoom">Reset this checklist</button><p class="note">Resetting clears completed ticks for this room only.</p></div></div></section><section id="request" class="view" hidden><div class="sectionhead"><h2>Request a Reset</h2></div><p class="note">Tell us a little about your space. This form prepares a message in your email app; it does not submit a booking automatically.</p><form class="form" id="requestForm"><div class="formgrid"><div class="field"><label for="name">Your name</label><input id="name" name="name" required autocomplete="name"></div><div class="field"><label for="email">Email address</label><input id="email" name="email" type="email" required autocomplete="email"></div><div class="field"><label for="space">Type of space</label><select id="space" name="space"><option>Home</option><option>Outdoor space</option><option>Workspace or organisation</option></select></div><div class="field"><label for="service">Preferred service</label><select id="service" name="service"><option>Quick Reset</option><option>Full Reset</option><option>Not sure yet</option></select></div></div><div class="field"><label for="details">Tell us about your space</label><textarea id="details" name="details" required placeholder="What would you like help organising?"></textarea></div><button class="btn" type="submit">Prepare email request →</button><p id="formStatus" class="note" role="status"></p><p class="note">Alternatively, use the <a href="https://resettable.co.uk/#contact" target="_blank" rel="noopener">request form on the Resettable website</a>.</p></form></section><section id="about" class="view" hidden><div class="sectionhead"><h2>A calmer space starts with a reset.</h2></div><div class="roomgrid"><div class="card"><span class="pill">Our approach</span><h3>Practical. Respectful. Judgement-free.</h3><p>Resettable offers organisation and decluttering for homes, outdoor spaces and workspaces in Islington, North London and surrounding areas.</p><p>From a focused tidy to a complete organisational reset, every project is tailored to your needs.</p></div><div class="card"><span class="pill">Our services</span><h3>Quick Reset</h3><p>For smaller spaces or focused jobs.</p><h3>Full Reset</h3><p>For larger, more involved spaces that need deeper sorting and organisation.</p><button class="btn" data-go="request">Get in touch →</button></div></div></section></main><footer class="footer"><div class="shell"><span>© Resettable · Organisation & Decluttering</span><a href="https://resettable.co.uk" target="_blank" rel="noopener">Visit resettable.co.uk ↗</a></div></footer><script>
-const rooms=[{id:'kitchen',name:'Kitchen',emoji:'🍃',description:'A calmer kitchen, one cupboard at a time.',tasks:['Clear one countertop','Check fridge for expired items','Sort one cupboard','Group similar items together','Wipe down your newly cleared space']},{id:'bedroom',name:'Bedroom',emoji:'☀️',description:'Make room for a restful start and end to your day.',tasks:['Make the bed','Choose five items to donate','Organise a bedside surface','Sort one drawer','Put away clothes left out']},{id:'living',name:'Living room',emoji:'🪴',description:'Create a welcoming space to relax.',tasks:['Clear the coffee table','Collect items that belong elsewhere','Organise books and magazines','Tidy cables and remotes','Refresh cushions and throws']},{id:'workspace',name:'Workspace',emoji:'✏️',description:'Less clutter, more focus.',tasks:['Clear your desk','Sort loose papers','Remove unused supplies','Organise charging cables','Create a clear working surface']}];
-const key='resettable-checklist-v1';let saved={};try{saved=JSON.parse(localStorage.getItem(key)||'{}')}catch{}let current='kitchen';const $=s=>document.querySelector(s);function done(id,i){return !!saved[id+'-'+i]}function count(room){return room.tasks.filter((_,i)=>done(room.id,i)).length}function save(){try{localStorage.setItem(key,JSON.stringify(saved))}catch{}}function refresh(){const total=rooms.reduce((n,r)=>n+count(r),0),max=rooms.reduce((n,r)=>n+r.tasks.length,0),pct=Math.round(total/max*100);$('#overall').textContent=pct+'%';$('#overallbar').style.width=pct+'%';$('#activeRooms').textContent=rooms.filter(r=>count(r)>0&&count(r)<r.tasks.length).length;$('#roomCards').replaceChildren(...rooms.slice(0,3).map(r=>{const e=document.createElement('article');e.className='card';const h=document.createElement('h3');h.textContent=r.emoji+' '+r.name;const p=document.createElement('p');p.textContent=count(r)+' of '+r.tasks.length+' steps completed';const b=document.createElement('button');b.className='btn outline';b.textContent='Open checklist →';b.onclick=()=>{current=r.id;show('rooms')};e.append(h,p,b);return e}));renderRoom()}function renderRoom(){const r=rooms.find(r=>r.id===current);$('#roomTabs').replaceChildren(...rooms.map(room=>{const b=document.createElement('button');b.textContent=room.name;b.className=room.id===current?'active':'';b.onclick=()=>{current=room.id;renderRoom()};return b}));$('#roomTitle').textContent=r.emoji+' '+r.name;$('#roomDescription').textContent=r.description;$('#tasks').replaceChildren(...r.tasks.map((task,i)=>{const div=document.createElement('div');div.className='task';const input=document.createElement('input');input.type='checkbox';input.id='task-'+i;input.checked=done(r.id,i);input.onchange=()=>{saved[r.id+'-'+i]=input.checked;save();refresh()};const label=document.createElement('label');label.htmlFor=input.id;label.textContent=task;div.append(input,label);return div}));const n=count(r),pct=Math.round(n/r.tasks.length*100);$('#roomPercent').textContent=pct+'%';$('#roombar').style.width=pct+'%';$('#roomCount').textContent=n+' of '+r.tasks.length+' tasks completed'}function show(view){document.querySelectorAll('.view').forEach(s=>s.hidden=s.id!==view);document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));if(view==='rooms')renderRoom();window.scrollTo({top:0,behavior:'smooth'})}document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>show(b.dataset.view));document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>show(b.dataset.go));$('#clearRoom').onclick=()=>{const r=rooms.find(r=>r.id===current);if(confirm('Clear completed tasks for '+r.name+'?')){r.tasks.forEach((_,i)=>delete saved[r.id+'-'+i]);save();refresh()}};$('#requestForm').onsubmit=e=>{e.preventDefault();const data=new FormData(e.target);const body=`Name: ${data.get('name')}\nEmail: ${data.get('email')}\nSpace: ${data.get('space')}\nService: ${data.get('service')}\n\nDetails:\n${data.get('details')}`;const subject='Resettable app - Reset enquiry';const mail='mailto:?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);$('#formStatus').textContent='Your email app will open with a prepared message. Add Resettable’s contact email address before sending, or use the website form below.';window.location.href=mail};refresh();
-</script></body></html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f6f3eb">
+  <meta name="description" content="A calmer space starts with a reset. Plan your next reset and make progress room by room.">
+  <title>Resettable | My Space</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-inner">
+      <a class="brand" href="#home" data-view="home" aria-label="Resettable home">
+        <img src="assets/resettable-future-logo.png" alt="Resettable">
+        <span>MY SPACE</span>
+      </a>
+      <nav class="topnav" aria-label="Main navigation">
+        <button type="button" data-view="home" class="active">Home</button>
+        <button type="button" data-view="rooms">My Spaces</button>
+        <button type="button" data-view="request">Request a Reset</button>
+        <button type="button" data-view="about">About</button>
+      </nav>
+      <a class="header-link" href="https://resettable.co.uk" target="_blank" rel="noopener">Visit website <span aria-hidden="true">↗</span></a>
+    </div>
+  </header>
+
+  <main class="app-main">
+    <section id="home" class="view dashboard-view">
+      <div class="welcome-hero">
+        <picture class="hero-photo" aria-hidden="true">
+          <source media="(max-width: 560px)" srcset="assets/hero-mobile.jpg">
+          <source media="(max-width: 900px)" srcset="assets/hero-tablet.jpg">
+          <img src="assets/hero-desktop.jpg" alt="">
+        </picture>
+        <div class="hero-overlay"></div>
+        <div class="hero-copy">
+          <p class="eyebrow">YOUR RESETTABLE SPACE</p>
+          <h1>A calmer space<br>starts with a <em>reset.</em></h1>
+          <p class="hero-description">Small steps make room for the things that matter.</p>
+          <button class="button button-dark" type="button" data-go="rooms">Continue your reset <span aria-hidden="true">→</span></button>
+        </div>
+        <div class="hero-note"><span class="note-sparkle" aria-hidden="true">✳</span> Progress at your own pace</div>
+      </div>
+
+      <div class="content-wrap dashboard-content">
+        <div class="section-heading">
+          <div><p class="eyebrow">A LITTLE PROGRESS, EVERY DAY</p><h2>Your reset at a glance</h2></div>
+          <span class="privacy-note"><span class="privacy-dot"></span> Saved on this device</span>
+        </div>
+
+        <div class="summary-grid">
+          <article class="summary-card progress-summary">
+            <div class="summary-top"><span class="summary-icon" aria-hidden="true">↗</span><span class="summary-label">OVERALL PROGRESS</span></div>
+            <div class="metric-line"><span class="metric" id="overall">0%</span><span class="metric-caption">of your reset</span></div>
+            <div class="progress-track" role="progressbar" aria-label="Overall checklist progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="overallbar"></div></div>
+            <p class="summary-foot">Every small step counts.</p>
+          </article>
+          <article class="summary-card rooms-summary">
+            <div class="summary-top"><span class="summary-icon" aria-hidden="true">⌂</span><span class="summary-label">SPACES IN PROGRESS</span></div>
+            <div class="metric-line"><span class="metric" id="activeRooms">0</span><span class="metric-caption">of 4 spaces</span></div>
+            <p class="summary-foot">Pick up where you left off.</p>
+            <button class="text-link" type="button" data-go="rooms">View my spaces <span aria-hidden="true">→</span></button>
+          </article>
+          <article class="summary-card support-summary">
+            <div class="summary-top"><span class="summary-icon" aria-hidden="true">✳</span><span class="summary-label">A HAND WHEN YOU NEED IT</span></div>
+            <h3>Ready for a little help?</h3>
+            <p class="summary-foot">Explore a Quick Reset or a Full Reset, tailored to your space.</p>
+            <button class="text-link" type="button" data-go="request">Talk to Resettable <span aria-hidden="true">→</span></button>
+          </article>
+        </div>
+
+        <div class="section-heading spaces-heading">
+          <div><p class="eyebrow">CHOOSE YOUR NEXT STEP</p><h2>My Spaces</h2></div>
+          <button class="text-link" type="button" data-go="rooms">See all checklists <span aria-hidden="true">→</span></button>
+        </div>
+        <div class="room-card-grid" id="roomCards"></div>
+
+        <div class="section-heading service-heading">
+          <div><p class="eyebrow">SUPPORT THAT FITS YOUR SPACE</p><h2>How can we help?</h2></div>
+        </div>
+        <div class="service-grid">
+          <article class="service-card"><img src="assets/home-card.jpg" alt="Bright, organised home interior" loading="lazy"><div class="service-copy"><span>01</span><h3>Home</h3><p>Living spaces, bedrooms, kitchens and storage.</p></div></article>
+          <article class="service-card"><img src="assets/outdoor-card.jpg" alt="A welcoming outdoor space" loading="lazy"><div class="service-copy"><span>02</span><h3>Outdoor</h3><p>Gardens, sheds, garages and outdoor spaces.</p></div></article>
+          <article class="service-card"><img src="assets/workspaces-card.jpg" alt="A calm, organised workspace" loading="lazy"><div class="service-copy"><span>03</span><h3>Workspaces</h3><p>Home offices, shared spaces and organisations.</p></div></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="rooms" class="view content-wrap inner-view" hidden>
+      <div class="page-intro"><p class="eyebrow">ONE STEP AT A TIME</p><h1>My Spaces</h1><p>Choose a checklist and make a little room for a calmer day.</p></div>
+      <div class="room-tabs" id="roomTabs" role="tablist" aria-label="Choose a space"></div>
+      <div class="checklist-layout">
+        <article class="panel checklist-panel">
+          <div class="panel-heading"><span class="pill">YOUR CHECKLIST</span><span class="room-counter" id="roomCount"></span></div>
+          <h2 id="roomTitle"></h2><p class="room-description" id="roomDescription"></p>
+          <div class="task-list" id="tasks"></div>
+          <button class="reset-checklist" id="clearRoom" type="button">↺ <span>Reset this checklist</span></button>
+        </article>
+        <aside class="panel progress-panel">
+          <div class="progress-illustration" aria-hidden="true"><span>✳</span></div>
+          <p class="eyebrow">LOOK AT YOU GO</p>
+          <h3>Making space for better days.</h3>
+          <div class="room-metric" id="roomPercent">0%</div>
+          <div class="progress-track" role="progressbar" aria-label="Current space progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="roombar"></div></div>
+          <p class="progress-encouragement" id="roomProgressText">Each task is a fresh start.</p>
+          <p class="note">Resetting clears completed ticks for this space only.</p>
+        </aside>
+      </div>
+    </section>
+
+    <section id="request" class="view content-wrap inner-view" hidden>
+      <div class="page-intro"><p class="eyebrow">A FRESH START, TOGETHER</p><h1>Request a Reset</h1><p>Tell us a little about your space. We’ll take it from there.</p></div>
+      <div class="request-layout">
+        <form class="request-form panel" id="requestForm">
+          <div class="form-heading"><span class="pill">LET’S GET STARTED</span><p>Share a few details and we’ll help you find the right reset.</p></div>
+          <div class="form-grid">
+            <div class="field"><label for="name">Your name</label><input id="name" name="name" required autocomplete="name" placeholder="Your name"></div>
+            <div class="field"><label for="email">Email address</label><input id="email" name="email" type="email" required autocomplete="email" placeholder="you@example.com"></div>
+            <div class="field"><label for="space">Type of space</label><select id="space" name="space"><option>Home</option><option>Outdoor space</option><option>Workspace or organisation</option></select></div>
+            <div class="field"><label for="service">Preferred service</label><select id="service" name="service"><option>Quick Reset</option><option>Full Reset</option><option>Not sure yet</option></select></div>
+          </div>
+          <div class="field"><label for="details">Tell us about your space</label><textarea id="details" name="details" required placeholder="What would you like help organising?"></textarea></div>
+          <button class="button button-dark submit-button" type="submit">Prepare email request <span aria-hidden="true">→</span></button>
+          <p id="formStatus" class="form-status" role="status" aria-live="polite"></p>
+          <p class="form-note">This prepares a message in your email app; it does not submit a booking automatically.</p>
+          <p class="form-note">Prefer the website? <a href="https://resettable.co.uk/#request" target="_blank" rel="noopener">Use the Resettable website form ↗</a></p>
+        </form>
+        <aside class="request-aside">
+          <div class="request-photo" role="img" aria-label="A bright, calm living space"></div>
+          <div class="aside-copy"><p class="eyebrow">PRACTICAL. RESPECTFUL. JUDGEMENT-FREE.</p><h2>Let’s make room for better days.</h2><p>From one focused corner to a full home reset, every project is shaped around what works for you.</p><a href="https://resettable.co.uk/#request" target="_blank" rel="noopener">Learn about our services <span aria-hidden="true">↗</span></a></div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="about" class="view content-wrap inner-view" hidden>
+      <div class="page-intro"><p class="eyebrow">A CALMER SPACE STARTS WITH A RESET</p><h1>About Resettable</h1><p>Thoughtful organisation and decluttering, at your pace.</p></div>
+      <div class="about-layout">
+        <article class="about-story panel"><span class="pill">OUR APPROACH</span><h2>Practical. Respectful. Judgement-free.</h2><p>Resettable offers organisation and decluttering for homes, outdoor spaces and workspaces in Islington, North London and surrounding areas.</p><p>From a focused tidy to a complete organisational reset, every project is tailored to your needs.</p><a class="button button-dark" href="https://resettable.co.uk" target="_blank" rel="noopener">Visit resettable.co.uk <span aria-hidden="true">↗</span></a></article>
+        <article class="about-services panel"><span class="pill">OUR SERVICES</span><div class="service-option"><span class="option-mark">◷</span><div><h3>Quick Reset</h3><p>For smaller spaces or focused jobs.</p></div></div><div class="service-option"><span class="option-mark">⌂</span><div><h3>Full Reset</h3><p>For larger, more involved spaces that need deeper sorting and organisation.</p></div></div><button class="text-link" type="button" data-go="request">Ask us about a reset <span aria-hidden="true">→</span></button></article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer"><div class="footer-inner"><span>© Resettable · Organisation &amp; Decluttering</span><a href="https://resettable.co.uk" target="_blank" rel="noopener">Visit resettable.co.uk ↗</a></div></footer>
+  <nav class="mobile-nav" aria-label="Mobile navigation">
+    <button type="button" data-view="home" class="active"><span aria-hidden="true">⌂</span>Home</button>
+    <button type="button" data-view="rooms"><span aria-hidden="true">▦</span>My Spaces</button>
+    <button type="button" data-view="request"><span aria-hidden="true">＋</span>Request</button>
+    <button type="button" data-view="about"><span aria-hidden="true">✳</span>About</button>
+  </nav>
+</body>
+</html>
