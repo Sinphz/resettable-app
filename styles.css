@@ -126,6 +126,22 @@ a { color: inherit; text-decoration: none; }
 .room-counter { color: var(--muted); font-size: 11px; }
 .checklist-panel h2 { margin: 17px 0 2px; color: var(--deep); font: 500 30px/1.2 "Playfair Display", Georgia, serif; }
 .room-description { margin: 0; color: var(--muted); font-size: 12px; }
+.goal-area { margin-top: 12px; }
+.goal-area:empty { display: none; }
+.goal-add-button { min-height: 30px; font-size: 11px; }
+.saved-goal { border: 1px solid rgba(15,59,39,.08); border-radius: 13px; padding: 11px 13px; background: #f8f7f1; }
+.saved-goal-label { color: var(--sage); font-size: 8px; font-weight: 700; letter-spacing: .14em; }
+.saved-goal-text { margin: 4px 0 8px; color: var(--ink); font-size: 12px; line-height: 1.45; overflow-wrap: anywhere; }
+.goal-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 15px; }
+.goal-actions .text-link { min-height: 28px; }
+.goal-remove-button { color: #8a4139; }
+.goal-editor { border: 1px solid rgba(15,59,39,.09); border-radius: 13px; padding: 12px; background: #f8f7f1; }
+.goal-editor-label { display: block; margin-bottom: 6px; color: var(--deep); font-size: 10px; font-weight: 700; }
+.goal-editor textarea { display: block; width: 100%; min-height: 72px; resize: vertical; border: 1px solid #dce1d8; border-radius: 11px; outline: none; padding: 10px 12px; color: var(--ink); background: white; font: 400 16px/1.4 "DM Sans", sans-serif; }
+.goal-editor textarea:focus { border-color: var(--sage); box-shadow: 0 0 0 3px rgba(142,165,125,.18); }
+.goal-actions { margin-top: 8px; }
+.goal-editor .goal-actions { margin-top: 10px; }
+.goal-save { min-height: 40px; padding: 0 15px; font-size: 11px; }
 .custom-space-controls { display: flex; flex-wrap: wrap; gap: 17px; margin-top: 11px; }
 .delete-space-link { color: #8a4139; }
 .task-list { margin-top: 20px; }

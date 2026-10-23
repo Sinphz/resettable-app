@@ -120,6 +120,7 @@ const rooms = [
 
 const storageKey = "resettable-checklist-v1";
 const customSpacesStorageKey = "resettable-custom-spaces-v1";
+const spaceGoalsStorageKey = "resettable-space-goals-v1";
 let saved = {};
 try {
   saved = JSON.parse(localStorage.getItem(storageKey) || "{}");
@@ -152,8 +153,24 @@ try {
   customSpaces = [];
 }
 
+let spaceGoals = {};
+try {
+  const parsedGoals = JSON.parse(localStorage.getItem(spaceGoalsStorageKey) || "{}");
+  if (parsedGoals && typeof parsedGoals === "object" && !Array.isArray(parsedGoals)) {
+    const validSpaceIds = new Set([...rooms, ...customSpaces].map(space => space.id));
+    for (const [spaceId, goal] of Object.entries(parsedGoals)) {
+      if (validSpaceIds.has(spaceId) && typeof goal === "string" && goal.trim()) {
+        spaceGoals[spaceId] = goal.trim().slice(0, 160);
+      }
+    }
+  }
+} catch {
+  spaceGoals = {};
+}
+
 let currentCategory = "home";
 let currentRoom = "kitchen";
+let goalEditorSpaceId = null;
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
 
@@ -188,6 +205,14 @@ function saveProgress() {
   try {
     // Keep old and unknown keys intact; only the task the customer changed is updated.
     localStorage.setItem(storageKey, JSON.stringify(saved));
+  } catch {
+    // Keep the checklist usable if this browser blocks local storage.
+  }
+}
+
+function saveSpaceGoals() {
+  try {
+    localStorage.setItem(spaceGoalsStorageKey, JSON.stringify(spaceGoals));
   } catch {
     // Keep the checklist usable if this browser blocks local storage.
   }
@@ -342,6 +367,7 @@ function openCategory(categoryId) {
 
 function renderRoom() {
   const room = getSpace(currentRoom) || rooms[0];
+  if (goalEditorSpaceId && goalEditorSpaceId !== room.id) goalEditorSpaceId = null;
   currentRoom = room.id;
   currentCategory = room.category;
   renderCategoryTabs();
@@ -349,6 +375,7 @@ function renderRoom() {
 
   $("#roomTitle").textContent = `${room.emoji} ${room.name}`;
   $("#roomDescription").textContent = room.description;
+  renderGoal(room);
   $("#customSpaceControls").hidden = !room.isCustom;
   $("#tasks").replaceChildren(...room.tasks.map((task, index) => {
     const row = document.createElement("div");
@@ -376,6 +403,108 @@ function renderRoom() {
     return row;
   }));
   refreshRoomProgress();
+}
+
+function renderGoal(space) {
+  const goalArea = $("#goalArea");
+  const goal = spaceGoals[space.id] || "";
+  goalArea.replaceChildren();
+
+  if (goalEditorSpaceId === space.id) {
+    const form = document.createElement("form");
+    form.className = "goal-editor";
+    const label = document.createElement("label");
+    label.className = "goal-editor-label";
+    label.htmlFor = "spaceGoalInput";
+    label.textContent = "My Goal";
+    const textarea = document.createElement("textarea");
+    textarea.id = "spaceGoalInput";
+    textarea.maxLength = 160;
+    textarea.required = true;
+    textarea.rows = 2;
+    textarea.placeholder = "What would you like to achieve in this space?";
+    textarea.value = goal;
+    const actions = document.createElement("div");
+    actions.className = "goal-actions";
+    const save = document.createElement("button");
+    save.type = "submit";
+    save.className = "button button-dark goal-save";
+    save.textContent = "Save goal";
+    const cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.className = "text-link";
+    cancel.textContent = "Cancel";
+    cancel.addEventListener("click", () => {
+      goalEditorSpaceId = null;
+      renderGoal(space);
+    });
+    actions.append(save, cancel);
+    form.append(label, textarea, actions);
+    form.addEventListener("submit", event => {
+      event.preventDefault();
+      if (!form.reportValidity()) return;
+      const value = textarea.value.trim();
+      if (!value) {
+        textarea.setCustomValidity("Please enter a short goal.");
+        textarea.reportValidity();
+        textarea.addEventListener("input", () => textarea.setCustomValidity(""), { once: true });
+        return;
+      }
+      spaceGoals[space.id] = value;
+      saveSpaceGoals();
+      goalEditorSpaceId = null;
+      renderGoal(space);
+    });
+    goalArea.append(form);
+    window.setTimeout(() => textarea.focus(), 0);
+    return;
+  }
+
+  if (!goal) {
+    const add = document.createElement("button");
+    add.type = "button";
+    add.className = "text-link goal-add-button";
+    add.setAttribute("aria-label", `Add a goal for ${space.name}`);
+    add.textContent = "+ Add a goal";
+    add.addEventListener("click", () => {
+      goalEditorSpaceId = space.id;
+      renderGoal(space);
+    });
+    goalArea.append(add);
+    return;
+  }
+
+  const savedGoal = document.createElement("div");
+  savedGoal.className = "saved-goal";
+  const label = document.createElement("span");
+  label.className = "saved-goal-label";
+  label.textContent = "MY GOAL";
+  const text = document.createElement("p");
+  text.className = "saved-goal-text";
+  text.textContent = goal;
+  const actions = document.createElement("div");
+  actions.className = "goal-actions";
+  const edit = document.createElement("button");
+  edit.type = "button";
+  edit.className = "text-link";
+  edit.textContent = "Edit goal";
+  edit.addEventListener("click", () => {
+    goalEditorSpaceId = space.id;
+    renderGoal(space);
+  });
+  const remove = document.createElement("button");
+  remove.type = "button";
+  remove.className = "text-link goal-remove-button";
+  remove.textContent = "Remove goal";
+  remove.addEventListener("click", () => {
+    if (!window.confirm(`Remove your goal for ${space.name}?`)) return;
+    delete spaceGoals[space.id];
+    saveSpaceGoals();
+    renderGoal(space);
+  });
+  actions.append(edit, remove);
+  savedGoal.append(label, text, actions);
+  goalArea.append(savedGoal);
 }
 
 function refreshRoomProgress() {
@@ -509,6 +638,8 @@ $("#deleteCustomSpace").addEventListener("click", () => {
   if (!space || !window.confirm(`Delete “${space.name}” and its checklist? This cannot be undone.`)) return;
   customSpaces = customSpaces.filter(item => item.id !== space.id);
   saveCustomSpaces();
+  delete spaceGoals[space.id];
+  saveSpaceGoals();
   currentRoom = categoryRooms(currentCategory)[0]?.id || rooms[0].id;
   renderDashboard();
   renderRoom();
