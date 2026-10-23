@@ -393,6 +393,7 @@ $("#clearRoom").addEventListener("click", () => {
 const requestForm = $("#requestForm");
 const requestSubmit = requestForm.querySelector('[type="submit"]');
 const formStatus = $("#formStatus");
+const connectionStatus = $("#connectionStatus");
 const submitButtonHTML = requestSubmit.innerHTML;
 let submissionInProgress = false;
 
@@ -400,6 +401,18 @@ function showFormStatus(message, state = "") {
   formStatus.className = `form-status${state ? ` ${state}` : ""}`;
   formStatus.textContent = message;
 }
+
+function updateConnectionStatus() {
+  const offline = !navigator.onLine;
+  connectionStatus.hidden = !offline;
+  connectionStatus.textContent = offline
+    ? "You’re offline. Saved progress is still available, but Request a Reset enquiries need an internet connection."
+    : "";
+}
+
+updateConnectionStatus();
+window.addEventListener("offline", updateConnectionStatus);
+window.addEventListener("online", updateConnectionStatus);
 
 requestForm.addEventListener("submit", async event => {
   event.preventDefault();
@@ -416,6 +429,11 @@ requestForm.addEventListener("submit", async event => {
   if (!detailsField.value.trim()) {
     showFormStatus("Please tell us a little about your space.", "error");
     detailsField.focus();
+    return;
+  }
+  if (!navigator.onLine) {
+    updateConnectionStatus();
+    showFormStatus("Your enquiry wasn’t sent because you’re offline. Your details are still here; reconnect and try again.", "error");
     return;
   }
 
@@ -444,7 +462,10 @@ requestForm.addEventListener("submit", async event => {
     requestForm.reset();
     showFormStatus("Thank you. Your enquiry has been sent successfully, and we’ll be in touch soon.", "success");
   } catch {
-    showFormStatus("We couldn’t send your enquiry just now. Your details are still here—please check your connection and try again.", "error");
+    if (!navigator.onLine) updateConnectionStatus();
+    showFormStatus(navigator.onLine
+      ? "We couldn’t send your enquiry just now. Your details are still here—please try again in a moment."
+      : "Your enquiry wasn’t sent because you’re offline. Your details are still here; reconnect and try again.", "error");
   } finally {
     submissionInProgress = false;
     requestSubmit.disabled = false;
@@ -452,6 +473,17 @@ requestForm.addEventListener("submit", async event => {
     requestSubmit.innerHTML = submitButtonHTML;
   }
 });
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js", {
+      scope: "./",
+      updateViaCache: "none"
+    }).catch(error => {
+      console.warn("Resettable offline support could not be registered.", error);
+    });
+  });
+}
 
 renderDashboard();
 renderRoom();

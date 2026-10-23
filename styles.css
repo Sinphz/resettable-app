@@ -159,6 +159,7 @@ a { color: inherit; text-decoration: none; }
 .form-status:not(:empty) { padding: 10px 12px; border-radius: 10px; background: #edf1e9; }
 .form-status.error:not(:empty) { color: #7d302a; background: #f8eae7; }
 .form-note { margin: 12px 0 0; color: var(--muted); font-size: 10px; }
+.form-note.offline-notice:not([hidden]) { padding: 10px 12px; border-radius: 10px; color: #7d302a; background: #f8eae7; }
 .form-note a { color: var(--deep); font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
 .request-aside { overflow: hidden; border-radius: var(--radius); background: var(--deep); color: white; box-shadow: var(--shadow); }
 .request-photo { min-height: 210px; background: linear-gradient(0deg, rgba(15,59,39,.1), transparent), url("assets/home-card.jpg") center / cover; }
