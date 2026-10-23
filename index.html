@@ -63,8 +63,8 @@
           </article>
           <article class="summary-card rooms-summary">
             <div class="summary-top"><span class="summary-icon" aria-hidden="true">⌂</span><span class="summary-label">SPACES IN PROGRESS</span></div>
-            <div class="metric-line"><span class="metric" id="activeRooms">0</span><span class="metric-caption">of 4 spaces</span></div>
-            <p class="summary-foot">Pick up where you left off.</p>
+            <div class="metric-line"><span class="metric" id="activeSpaces">0</span><span class="metric-caption">spaces underway</span></div>
+            <p class="summary-foot">Across all 10 spaces in 3 categories.</p>
             <button class="text-link" type="button" data-go="rooms">View my spaces <span aria-hidden="true">→</span></button>
           </article>
           <article class="summary-card support-summary">
@@ -76,25 +76,26 @@
         </div>
 
         <div class="section-heading spaces-heading">
-          <div><p class="eyebrow">CHOOSE YOUR NEXT STEP</p><h2>My Spaces</h2></div>
-          <button class="text-link" type="button" data-go="rooms">See all checklists <span aria-hidden="true">→</span></button>
+          <div><p class="eyebrow">CHOOSE YOUR NEXT STEP</p><h2>Explore My Spaces</h2></div>
+          <button class="text-link" type="button" data-go="rooms">See all spaces <span aria-hidden="true">→</span></button>
         </div>
-        <div class="room-card-grid" id="roomCards"></div>
+        <div class="room-card-grid" id="categoryCards"></div>
 
         <div class="section-heading service-heading">
-          <div><p class="eyebrow">SUPPORT THAT FITS YOUR SPACE</p><h2>How can we help?</h2></div>
+          <div><p class="eyebrow">SUPPORT THAT FITS YOUR SPACE</p><h2>How We Can Help</h2></div>
         </div>
         <div class="service-grid">
-          <article class="service-card"><img src="assets/home-card.jpg" alt="Bright, organised home interior" loading="lazy"><div class="service-copy"><span>01</span><h3>Home</h3><p>Living spaces, bedrooms, kitchens and storage.</p></div></article>
-          <article class="service-card"><img src="assets/outdoor-card.jpg" alt="A welcoming outdoor space" loading="lazy"><div class="service-copy"><span>02</span><h3>Outdoor</h3><p>Gardens, sheds, garages and outdoor spaces.</p></div></article>
-          <article class="service-card"><img src="assets/workspaces-card.jpg" alt="A calm, organised workspace" loading="lazy"><div class="service-copy"><span>03</span><h3>Workspaces</h3><p>Home offices, shared spaces and organisations.</p></div></article>
+          <article class="service-card"><img src="assets/home-card.jpg" alt="Bright, organised home interior" loading="lazy"><div class="service-copy"><span>01</span><h3>Home</h3><p>Living spaces, bedrooms, kitchens and storage.</p><button class="service-explore" type="button" data-category="home">Explore Spaces <span aria-hidden="true">→</span></button></div></article>
+          <article class="service-card"><img src="assets/outdoor-card.jpg" alt="A welcoming outdoor space" loading="lazy"><div class="service-copy"><span>02</span><h3>Outdoor</h3><p>Gardens, sheds, garages and outdoor spaces.</p><button class="service-explore" type="button" data-category="outdoor">Explore Spaces <span aria-hidden="true">→</span></button></div></article>
+          <article class="service-card"><img src="assets/workspaces-card.jpg" alt="A calm, organised workspace" loading="lazy"><div class="service-copy"><span>03</span><h3>Workspaces &amp; Organisations</h3><p>Workspaces, offices, storage and shared spaces.</p><button class="service-explore" type="button" data-category="workspaces">Explore Spaces <span aria-hidden="true">→</span></button></div></article>
         </div>
       </div>
     </section>
 
     <section id="rooms" class="view content-wrap inner-view" hidden>
-      <div class="page-intro"><p class="eyebrow">ONE STEP AT A TIME</p><h1>My Spaces</h1><p>Choose a checklist and make a little room for a calmer day.</p></div>
-      <div class="room-tabs" id="roomTabs" role="tablist" aria-label="Choose a space"></div>
+      <div class="page-intro"><p class="eyebrow">ONE STEP AT A TIME</p><h1>My Spaces</h1><p>Explore spaces across Home, Outdoor, and Workspaces &amp; Organisations.</p></div>
+      <div class="room-tabs" id="categoryTabs" role="tablist" aria-label="Choose a category"></div>
+      <div class="space-selector-grid" id="spaceCards" aria-label="Spaces in this category"></div>
       <div class="checklist-layout">
         <article class="panel checklist-panel">
           <div class="panel-heading"><span class="pill">YOUR CHECKLIST</span><span class="room-counter" id="roomCount"></span></div>
