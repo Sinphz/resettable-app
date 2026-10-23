@@ -1066,6 +1066,233 @@ requestForm.addEventListener("submit", async event => {
   }
 });
 
+const backupFormat = "resettable-my-reset-backup";
+const backupVersion = 1;
+const backupMaxBytes = 1024 * 1024;
+const backupStorageKeys = [storageKey, customSpacesStorageKey, spaceGoalsStorageKey, resetSessionStorageKey];
+const backupStatus = $("#backupRestoreStatus");
+const restoreFileInput = $("#restoreFileInput");
+let backupObjectUrl = null;
+
+function setBackupStatus(message, isError = false, link = null) {
+  backupStatus.replaceChildren();
+  backupStatus.className = `backup-restore-status${isError ? " error" : ""}`;
+  backupStatus.append(document.createTextNode(message));
+  if (link) {
+    backupStatus.append(document.createTextNode(" "));
+    const fallbackLink = document.createElement("a");
+    fallbackLink.href = link.href;
+    fallbackLink.download = link.filename;
+    fallbackLink.textContent = "Open or save the backup file";
+    backupStatus.append(fallbackLink);
+  }
+}
+
+function isPlainRecord(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value)
+    && (Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null);
+}
+
+function validateBackupData(data) {
+  if (!isPlainRecord(data) || Object.keys(data).length !== backupStorageKeys.length
+      || backupStorageKeys.some(key => !Object.prototype.hasOwnProperty.call(data, key))) {
+    throw new Error("This file is missing one or more Reset data sections.");
+  }
+
+  const progress = data[storageKey];
+  if (!isPlainRecord(progress) || Object.keys(progress).length > 10000
+      || Object.entries(progress).some(([key, done]) => !key || key.length > 200
+        || ["__proto__", "prototype", "constructor"].includes(key) || typeof done !== "boolean")) {
+    throw new Error("The checklist progress in this file is not valid.");
+  }
+
+  const spaces = data[customSpacesStorageKey];
+  const categoryIds = new Set(categories.map(category => category.id));
+  const fixedIds = new Set(rooms.map(room => room.id));
+  if (!Array.isArray(spaces) || spaces.length > 100) {
+    throw new Error("The custom spaces in this file are not valid.");
+  }
+  const spaceIds = new Set(fixedIds);
+  for (const space of spaces) {
+    if (!isPlainRecord(space) || Object.keys(space).some(key => !["id", "name", "category", "description", "emoji", "tasks"].includes(key))
+        || typeof space.id !== "string" || !space.id || space.id.length > 200
+        || spaceIds.has(space.id) || typeof space.name !== "string" || !space.name.trim() || space.name.length > 60
+        || !categoryIds.has(space.category) || (space.description !== undefined
+          && (typeof space.description !== "string" || space.description.length > 500))
+        || (space.emoji !== undefined && (typeof space.emoji !== "string" || space.emoji.length > 40))
+        || !Array.isArray(space.tasks) || space.tasks.length < 1 || space.tasks.length > 100) {
+      throw new Error("A custom space in this file is incomplete or invalid.");
+    }
+    spaceIds.add(space.id);
+    const taskIds = new Set();
+    for (const task of space.tasks) {
+      if (!isPlainRecord(task) || Object.keys(task).some(key => !["id", "text", "done"].includes(key))
+          || (task.id !== undefined && (typeof task.id !== "string" || !task.id || task.id.length > 200 || taskIds.has(task.id)))
+          || typeof task.text !== "string" || !task.text.trim() || task.text.length > 160
+          || (task.done !== undefined && typeof task.done !== "boolean")) {
+        throw new Error("A custom checklist task in this file is incomplete or invalid.");
+      }
+      if (task.id !== undefined) taskIds.add(task.id);
+    }
+  }
+
+  const goals = data[spaceGoalsStorageKey];
+  if (!isPlainRecord(goals) || Object.keys(goals).length > 200
+      || Object.entries(goals).some(([spaceId, goal]) => !spaceIds.has(spaceId)
+        || typeof goal !== "string" || !goal.trim() || goal.length > 160)) {
+    throw new Error("The personal goals in this file are not valid for the included spaces.");
+  }
+
+  const session = data[resetSessionStorageKey];
+  if (session !== null) {
+    if (!isPlainRecord(session) || !spaceIds.has(session.spaceId)
+        || ![10, 15, 30].includes(session.durationMinutes)
+        || !["running", "paused", "completed"].includes(session.status)) {
+      throw new Error("The Reset Session in this file is not valid.");
+    }
+    if (session.status === "running") {
+      if (Object.keys(session).some(key => !["spaceId", "durationMinutes", "status", "endAt"].includes(key))
+          || !Number.isFinite(session.endAt) || session.endAt <= 0) {
+        throw new Error("The running session details in this file are not valid.");
+      }
+    } else if (session.status === "paused") {
+      if (Object.keys(session).some(key => !["spaceId", "durationMinutes", "status", "remainingMs"].includes(key))
+          || !Number.isFinite(session.remainingMs) || session.remainingMs <= 0
+          || session.remainingMs > session.durationMinutes * 60 * 1000) {
+        throw new Error("The paused session details in this file are not valid.");
+      }
+    } else if (Object.keys(session).some(key => !["spaceId", "durationMinutes", "status"].includes(key))) {
+      throw new Error("The completed session details in this file are not valid.");
+    }
+  }
+  return data;
+}
+
+function readSavedDataForBackup() {
+  const defaults = {
+    [storageKey]: {},
+    [customSpacesStorageKey]: [],
+    [spaceGoalsStorageKey]: {},
+    [resetSessionStorageKey]: null
+  };
+  const data = {};
+  for (const key of backupStorageKeys) {
+    const storedValue = localStorage.getItem(key);
+    try {
+      data[key] = storedValue === null ? defaults[key] : JSON.parse(storedValue);
+    } catch {
+      throw new Error("Reset data on this device could not be read safely. Your saved data has not been changed.");
+    }
+  }
+  return validateBackupData(data);
+}
+
+function backupTimestamp(value) {
+  if (typeof value !== "string") throw new Error("This backup has an invalid creation date.");
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) throw new Error("This backup has an invalid creation date.");
+  return date;
+}
+
+function validateBackupFile(parsed) {
+  if (!isPlainRecord(parsed) || parsed.format !== backupFormat) {
+    throw new Error("This does not look like a Resettable My Reset backup.");
+  }
+  if (parsed.version !== backupVersion) {
+    throw new Error("This backup version is not supported by this app.");
+  }
+  if (Object.keys(parsed).some(key => !["format", "version", "createdAt", "data"].includes(key))) {
+    throw new Error("This backup contains unexpected data and can’t be restored.");
+  }
+  backupTimestamp(parsed.createdAt);
+  return validateBackupData(parsed.data);
+}
+
+$("#backupDataButton").addEventListener("click", () => {
+  try {
+    const data = readSavedDataForBackup();
+    const backup = {
+      format: backupFormat,
+      version: backupVersion,
+      createdAt: new Date().toISOString(),
+      data
+    };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+    if (blob.size > backupMaxBytes) throw new Error("This backup is larger than the supported 1 MB limit.");
+    if (backupObjectUrl) URL.revokeObjectURL(backupObjectUrl);
+    backupObjectUrl = URL.createObjectURL(blob);
+    const filename = `resettable-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    const downloadLink = document.createElement("a");
+    downloadLink.href = backupObjectUrl;
+    downloadLink.download = filename;
+    downloadLink.style.display = "none";
+    document.body.append(downloadLink);
+    downloadLink.click();
+    downloadLink.remove();
+    setBackupStatus("Your backup is ready. If it doesn’t download, open the link and use Share to save it to Files.", false, {
+      href: backupObjectUrl,
+      filename
+    });
+  } catch (error) {
+    setBackupStatus(error instanceof Error ? error.message : "The backup could not be created.", true);
+  }
+});
+
+$("#restoreDataButton").addEventListener("click", () => {
+  restoreFileInput.value = "";
+  restoreFileInput.click();
+});
+
+function restoreSavedData(data) {
+  const previousValues = new Map(backupStorageKeys.map(key => [key, localStorage.getItem(key)]));
+  try {
+    for (const key of backupStorageKeys) localStorage.setItem(key, JSON.stringify(data[key]));
+  } catch (error) {
+    let rollbackFailed = false;
+    for (const key of backupStorageKeys) {
+      try {
+        const previousValue = previousValues.get(key);
+        if (previousValue === null) localStorage.removeItem(key);
+        else localStorage.setItem(key, previousValue);
+      } catch {
+        rollbackFailed = true;
+      }
+    }
+    if (rollbackFailed) {
+      throw new Error("Restore stopped because the browser ran out of storage. The app tried to restore the previous data; keep this page open and check My Reset before trying again.");
+    }
+    throw new Error("Restore could not be saved. Your previous My Reset data has been restored.");
+  }
+}
+
+restoreFileInput.addEventListener("change", async () => {
+  const file = restoreFileInput.files?.[0];
+  if (!file) return;
+  try {
+    if (file.size > backupMaxBytes) throw new Error("This file is larger than the supported 1 MB limit.");
+    const parsed = JSON.parse(await file.text());
+    const data = validateBackupFile(parsed);
+    const createdAt = backupTimestamp(parsed.createdAt).toLocaleString();
+    const shouldRestore = window.confirm(
+      `Restore the Reset data backed up ${createdAt}? This will replace the current My Reset data on this device. A running session keeps its original end time and may already be complete; paused sessions stay paused.`
+    );
+    if (!shouldRestore) {
+      setBackupStatus("Restore cancelled. Your current data has not been changed.");
+      return;
+    }
+    restoreSavedData(data);
+    window.location.reload();
+  } catch (error) {
+    setBackupStatus(error instanceof Error ? error.message : "This backup could not be restored.", true);
+  } finally {
+    restoreFileInput.value = "";
+  }
+});
+
+window.addEventListener("beforeunload", () => {
+  if (backupObjectUrl) URL.revokeObjectURL(backupObjectUrl);
+});
+
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("./service-worker.js", {

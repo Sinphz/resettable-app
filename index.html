@@ -18,7 +18,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
-  <script src="script.js?v=request-reset-v3" defer></script>
+  <script src="script.js?v=backup-restore-v1" defer></script>
 </head>
 <body>
   <header class="app-header">
@@ -171,6 +171,11 @@
         <article class="about-story panel"><span class="pill">OUR APPROACH</span><h2>Practical. Respectful. Judgement-free.</h2><p>Resettable offers organisation and decluttering for homes, outdoor spaces and workspaces in Islington, North London and surrounding areas.</p><p>From a focused tidy to a complete organisational reset, every project is tailored to your needs.</p><div class="about-contact"><a href="tel:+442080885636">020 8088 5636</a><a href="https://wa.me/442080885636?text=Hi%20Resettable%2C%20I%27d%20like%20some%20help%20organising%20my%20space.%20Could%20we%20discuss%20a%20reset%3F" target="_blank" rel="noopener">WhatsApp</a></div><a class="button button-dark" href="https://resettable.co.uk" target="_blank" rel="noopener">Visit resettable.co.uk <span aria-hidden="true">↗</span></a></article>
         <article class="about-services panel"><span class="pill">OUR SERVICES</span><div class="service-option"><span class="option-mark">◷</span><div><h3>Quick Reset</h3><p>For smaller spaces or focused jobs.</p></div></div><div class="service-option"><span class="option-mark">⌂</span><div><h3>Full Reset</h3><p>For larger, more involved spaces that need deeper sorting and organisation.</p></div></div><button class="text-link" type="button" data-go="request">Ask us about a reset <span aria-hidden="true">→</span></button></article>
       </div>
+      <section class="data-backup panel" aria-labelledby="dataBackupTitle">
+        <div class="data-backup-copy"><span class="pill">YOUR RESET DATA</span><h2 id="dataBackupTitle">Backup &amp; Restore</h2><p>Your progress is saved on this device. Back up your Reset data to a file and keep it somewhere safe.</p></div>
+        <div class="data-backup-actions"><button class="button button-soft" type="button" id="backupDataButton">Back Up My Reset</button><button class="button button-soft" type="button" id="restoreDataButton">Restore My Reset</button><input id="restoreFileInput" type="file" accept="application/json,.json" hidden></div>
+        <p id="backupRestoreStatus" class="backup-restore-status" role="status" aria-live="polite"></p>
+      </section>
       <section class="about-process panel" aria-labelledby="aboutProcessTitle">
         <div class="about-process-heading"><span class="pill">HOW IT WORKS</span><h2 id="aboutProcessTitle">A clear plan, together</h2></div>
         <ol class="about-process-steps">
