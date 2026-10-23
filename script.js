@@ -306,7 +306,7 @@ function renderDashboard() {
     const marker = document.createElement("span");
     marker.className = "room-emoji";
     marker.setAttribute("aria-hidden", "true");
-    marker.textContent = category.id === "home" ? "⌂" : category.id === "outdoor" ? "🌿" : "✏️";
+    marker.textContent = category.id === "home" ? "🏘️" : category.id === "outdoor" ? "🌿" : "✏️";
     const count = document.createElement("span");
     count.className = "room-card-count";
     count.textContent = `${group.length} spaces`;
@@ -911,9 +911,15 @@ $("#deleteCustomSpace").addEventListener("click", () => {
   renderRoom();
 });
 
+let currentViewId = "home";
+let settingsReturnView = "home";
+
 function showView(viewId) {
   const view = document.getElementById(viewId);
   if (!view || !view.classList.contains("view")) return;
+
+  if (viewId === "settings" && currentViewId !== "settings") settingsReturnView = currentViewId;
+  currentViewId = viewId;
 
   $$(".view").forEach(section => {
     section.hidden = section.id !== viewId;
@@ -930,6 +936,9 @@ function showView(viewId) {
   if (viewId === "rooms") renderRoom();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
+
+$("#openSettings").addEventListener("click", () => showView("settings"));
+$("#settingsBack").addEventListener("click", () => showView(settingsReturnView));
 
 $$('[data-view]').forEach(button => {
   button.addEventListener("click", event => {
