@@ -951,6 +951,27 @@ $$('[data-category]').forEach(button => {
   });
 });
 
+$("#requestSpaceReset").addEventListener("click", () => {
+  const room = getSpace(currentRoom);
+  if (!room) return;
+
+  const category = categories.find(item => item.id === room.category);
+  if (!category) return;
+
+  $("#space").value = category.name;
+  const detailsField = $("#details");
+  const contextLine = `Space: ${room.name}`;
+  const existingLines = detailsField.value.split(/\r?\n/).map(line => line.trim());
+  if (!existingLines.includes(contextLine)) {
+    const existingMessage = detailsField.value.trimEnd();
+    detailsField.value = existingMessage
+      ? `${existingMessage}\n\n${contextLine}`
+      : contextLine;
+  }
+
+  showView("request");
+});
+
 $("#clearRoom").addEventListener("click", () => {
   const room = getSpace(currentRoom);
   if (!room || !window.confirm(`Clear completed tasks for ${room.name}?`)) return;

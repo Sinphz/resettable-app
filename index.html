@@ -18,7 +18,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
-  <script src="script.js?v=request-reset-v2" defer></script>
+  <script src="script.js?v=request-reset-v3" defer></script>
 </head>
 <body>
   <header class="app-header">
@@ -117,6 +117,11 @@
           </div>
           <div class="task-list" id="tasks"></div>
           <button class="reset-checklist" id="clearRoom" type="button">↺ <span>Reset this checklist</span></button>
+          <div class="helping-hand" id="helpingHand">
+            <h3>Need a helping hand?</h3>
+            <p>Sometimes a little extra support makes all the difference.</p>
+            <button class="text-link" type="button" id="requestSpaceReset">Request a Reset <span aria-hidden="true">→</span></button>
+          </div>
         </article>
         <aside class="panel progress-panel">
           <div class="progress-illustration" aria-hidden="true"><span>✳</span></div>
@@ -147,7 +152,11 @@
           <p id="formStatus" class="form-status" role="status" aria-live="polite"></p>
           <p id="connectionStatus" class="form-note offline-notice" role="status" aria-live="polite" hidden></p>
           <p class="form-note">Your enquiry will be sent securely to Resettable.</p>
-          <p class="form-note">Prefer to call? <a href="tel:+442080885636">020 8088 5636</a></p>
+          <div class="form-contact-options" aria-label="Other ways to contact Resettable">
+            <span>Or contact us:</span>
+            <a href="https://wa.me/442080885636?text=Hi%20Resettable%2C%20I%27d%20like%20some%20help%20organising%20my%20space.%20Could%20we%20discuss%20a%20reset%3F" target="_blank" rel="noopener">WhatsApp</a>
+            <a href="tel:+442080885636">Call</a>
+          </div>
         </form>
         <aside class="request-aside">
           <div class="request-photo" role="img" aria-label="A bright, calm living space"></div>
@@ -159,7 +168,7 @@
     <section id="about" class="view content-wrap inner-view" hidden>
       <div class="page-intro"><p class="eyebrow">A CALMER SPACE STARTS WITH A RESET</p><h1>About Resettable</h1><p>Thoughtful organisation and decluttering, at your pace.</p></div>
       <div class="about-layout">
-        <article class="about-story panel"><span class="pill">OUR APPROACH</span><h2>Practical. Respectful. Judgement-free.</h2><p>Resettable offers organisation and decluttering for homes, outdoor spaces and workspaces in Islington, North London and surrounding areas.</p><p>From a focused tidy to a complete organisational reset, every project is tailored to your needs.</p><a class="button button-dark" href="https://resettable.co.uk" target="_blank" rel="noopener">Visit resettable.co.uk <span aria-hidden="true">↗</span></a></article>
+        <article class="about-story panel"><span class="pill">OUR APPROACH</span><h2>Practical. Respectful. Judgement-free.</h2><p>Resettable offers organisation and decluttering for homes, outdoor spaces and workspaces in Islington, North London and surrounding areas.</p><p>From a focused tidy to a complete organisational reset, every project is tailored to your needs.</p><div class="about-contact"><a href="tel:+442080885636">020 8088 5636</a><a href="https://wa.me/442080885636?text=Hi%20Resettable%2C%20I%27d%20like%20some%20help%20organising%20my%20space.%20Could%20we%20discuss%20a%20reset%3F" target="_blank" rel="noopener">WhatsApp</a></div><a class="button button-dark" href="https://resettable.co.uk" target="_blank" rel="noopener">Visit resettable.co.uk <span aria-hidden="true">↗</span></a></article>
         <article class="about-services panel"><span class="pill">OUR SERVICES</span><div class="service-option"><span class="option-mark">◷</span><div><h3>Quick Reset</h3><p>For smaller spaces or focused jobs.</p></div></div><div class="service-option"><span class="option-mark">⌂</span><div><h3>Full Reset</h3><p>For larger, more involved spaces that need deeper sorting and organisation.</p></div></div><button class="text-link" type="button" data-go="request">Ask us about a reset <span aria-hidden="true">→</span></button></article>
       </div>
       <section class="about-process panel" aria-labelledby="aboutProcessTitle">
