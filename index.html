@@ -18,7 +18,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
-  <script src="script.js?v=20261023-custom-spaces" defer></script>
+  <script src="script.js?v=20261023-customer-journey" defer></script>
 </head>
 <body>
   <header class="app-header">
@@ -47,15 +47,38 @@
         </picture>
         <div class="hero-overlay"></div>
         <div class="hero-copy">
-          <p class="eyebrow">YOUR RESETTABLE SPACE</p>
+          <p class="eyebrow">PROFESSIONAL ORGANISATION &amp; DECLUTTERING</p>
           <h1>A calmer space<br>starts with a <em>reset.</em></h1>
-          <p class="hero-description">Small steps make room for the things that matter.</p>
-          <button class="button button-dark" type="button" data-go="rooms">Continue your reset <span aria-hidden="true">→</span></button>
+          <p class="hero-description">Professional organisation and decluttering for homes, outdoor spaces and workspaces.</p>
+          <div class="hero-actions">
+            <button class="button button-dark" type="button" data-go="request">Request a Reset <span aria-hidden="true">→</span></button>
+            <button class="button button-light" type="button" data-go="rooms">Start My Reset</button>
+          </div>
         </div>
         <div class="hero-note"><span class="note-sparkle" aria-hidden="true">✳</span> Progress at your own pace</div>
       </div>
 
       <div class="content-wrap dashboard-content">
+        <section class="how-it-works" aria-labelledby="howItWorksTitle">
+          <div class="section-heading">
+            <div><p class="eyebrow">A CLEAR, CONSIDERED PROCESS</p><h2 id="howItWorksTitle">How It Works</h2></div>
+          </div>
+          <div class="steps-grid">
+            <article class="step-card"><span class="step-number">01</span><h3>Tell us about your space</h3><p>Send a short enquiry describing what you’d like to organise or declutter.</p></article>
+            <article class="step-card"><span class="step-number">02</span><h3>Let’s discuss your reset</h3><p>We’ll get in touch to understand your space and requirements.</p></article>
+            <article class="step-card"><span class="step-number">03</span><h3>Plan your fresh start</h3><p>Together, we’ll agree on an appropriate service and next steps.</p></article>
+          </div>
+        </section>
+
+        <div class="section-heading service-heading">
+          <div><p class="eyebrow">PROFESSIONAL SUPPORT FOR YOUR SPACE</p><h2>How We Can Help</h2></div>
+        </div>
+        <div class="service-grid">
+          <article class="service-card"><img src="assets/home-card.jpg" alt="Bright, organised home interior" loading="lazy"><div class="service-copy"><span>01</span><h3>Home</h3><p>Professional decluttering and organisation for living spaces, bedrooms, kitchens and storage.</p><button class="service-explore" type="button" data-category="home">Request a Reset <span aria-hidden="true">→</span></button></div></article>
+          <article class="service-card"><img src="assets/outdoor-card.jpg" alt="A welcoming outdoor space" loading="lazy"><div class="service-copy"><span>02</span><h3>Outdoor</h3><p>Practical support to declutter and organise gardens, sheds, garages and outdoor storage.</p><button class="service-explore" type="button" data-category="outdoor">Request a Reset <span aria-hidden="true">→</span></button></div></article>
+          <article class="service-card"><img src="assets/workspaces-card.jpg" alt="A calm, organised workspace" loading="lazy"><div class="service-copy"><span>03</span><h3>Workspaces &amp; Organisations</h3><p>Professional organisation for workspaces, offices, storage and shared areas.</p><button class="service-explore" type="button" data-category="workspaces">Request a Reset <span aria-hidden="true">→</span></button></div></article>
+        </div>
+
         <div class="section-heading">
           <div><p class="eyebrow">A LITTLE PROGRESS, EVERY DAY</p><h2>Your reset at a glance</h2></div>
           <span class="privacy-note"><span class="privacy-dot"></span> Saved on this device</span>
@@ -88,14 +111,6 @@
         </div>
         <div class="room-card-grid" id="categoryCards"></div>
 
-        <div class="section-heading service-heading">
-          <div><p class="eyebrow">PROFESSIONAL ORGANISATION &amp; DECLUTTERING</p><h2>How We Can Help</h2></div>
-        </div>
-        <div class="service-grid">
-          <article class="service-card"><img src="assets/home-card.jpg" alt="Bright, organised home interior" loading="lazy"><div class="service-copy"><span>01</span><h3>Home</h3><p>Professional decluttering and organisation for living spaces, bedrooms, kitchens and storage.</p><button class="service-explore" type="button" data-category="home">Request a Reset <span aria-hidden="true">→</span></button></div></article>
-          <article class="service-card"><img src="assets/outdoor-card.jpg" alt="A welcoming outdoor space" loading="lazy"><div class="service-copy"><span>02</span><h3>Outdoor</h3><p>Practical support to declutter and organise gardens, sheds, garages and outdoor storage.</p><button class="service-explore" type="button" data-category="outdoor">Request a Reset <span aria-hidden="true">→</span></button></div></article>
-          <article class="service-card"><img src="assets/workspaces-card.jpg" alt="A calm, organised workspace" loading="lazy"><div class="service-copy"><span>03</span><h3>Workspaces &amp; Organisations</h3><p>Professional organisation for workspaces, offices, storage and shared areas.</p><button class="service-explore" type="button" data-category="workspaces">Request a Reset <span aria-hidden="true">→</span></button></div></article>
-        </div>
       </div>
     </section>
 
@@ -132,7 +147,7 @@
       <div class="request-layout">
         <form class="request-form panel" id="requestForm" action="https://formspree.io/f/mnpalzwv" method="POST">
           <input type="hidden" name="_subject" value="New Resettable enquiry">
-          <div class="form-heading"><span class="pill">LET’S GET STARTED</span><p>Share a few details and we’ll help you find the right reset.</p></div>
+          <div class="form-heading"><span class="pill">LET’S GET STARTED</span><p>Share a few details and we’ll help you find the right reset.</p><p class="enquiry-reassurance">This is an enquiry, not a booking. We’ll be in touch to understand your space and discuss next steps.</p></div>
           <div class="form-grid">
             <div class="field"><label for="name">Your name</label><input id="name" name="name" required autocomplete="name" placeholder="Your name"></div>
             <div class="field"><label for="email">Email address</label><input id="email" name="email" type="email" required autocomplete="email" placeholder="you@example.com"></div>
