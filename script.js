@@ -3,6 +3,7 @@ const categories = [
   { id: "outdoor", name: "Outdoor", description: "Make more of the spaces just outside." },
   { id: "workspaces", name: "Workspaces & Organisations", description: "Clear, practical spaces to work and share." }
 ];
+const formspreeEndpoint = "https://formspree.io/f/mnpalzwv";
 
 const rooms = [
   {
@@ -389,14 +390,67 @@ $("#clearRoom").addEventListener("click", () => {
   renderRoom();
 });
 
-$("#requestForm").addEventListener("submit", event => {
+const requestForm = $("#requestForm");
+const requestSubmit = requestForm.querySelector('[type="submit"]');
+const formStatus = $("#formStatus");
+const submitButtonHTML = requestSubmit.innerHTML;
+let submissionInProgress = false;
+
+function showFormStatus(message, state = "") {
+  formStatus.className = `form-status${state ? ` ${state}` : ""}`;
+  formStatus.textContent = message;
+}
+
+requestForm.addEventListener("submit", async event => {
   event.preventDefault();
-  const data = new FormData(event.currentTarget);
-  const body = `Name: ${data.get("name")}\nEmail: ${data.get("email")}\nSpace: ${data.get("space")}\nService: ${data.get("service")}\n\nDetails:\n${data.get("details")}`;
-  const subject = "Resettable app - Reset enquiry";
-  const mailto = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  $("#formStatus").textContent = "Your email app will open with a prepared message. Add Resettable’s contact email address before sending, or use the website form below.";
-  window.location.href = mailto;
+  if (submissionInProgress || !requestForm.reportValidity()) return;
+
+  const nameField = $("#name");
+  const emailField = $("#email");
+  const detailsField = $("#details");
+  if (!nameField.value.trim()) {
+    showFormStatus("Please enter your name.", "error");
+    nameField.focus();
+    return;
+  }
+  if (!detailsField.value.trim()) {
+    showFormStatus("Please tell us a little about your space.", "error");
+    detailsField.focus();
+    return;
+  }
+
+  submissionInProgress = true;
+  requestSubmit.disabled = true;
+  requestForm.setAttribute("aria-busy", "true");
+  requestSubmit.textContent = "Sending request…";
+  showFormStatus("Sending your enquiry…");
+
+  const formData = new FormData(requestForm);
+  formData.set("name", nameField.value.trim());
+  formData.set("email", emailField.value.trim());
+  formData.set("message", detailsField.value.trim());
+
+  try {
+    const response = await fetch(formspreeEndpoint, {
+      method: "POST",
+      headers: { Accept: "application/json" },
+      body: formData
+    });
+
+    if (!response.ok) {
+      throw new Error(`Form submission failed (${response.status}).`);
+    }
+
+    requestForm.reset();
+    showFormStatus("Thank you. Your enquiry has been sent successfully, and we’ll be in touch soon.", "success");
+  } catch {
+    showFormStatus("We couldn’t send your enquiry just now. Your details are still here—please check your connection and try again.", "error");
+  } finally {
+    submissionInProgress = false;
+    requestSubmit.disabled = false;
+    requestForm.removeAttribute("aria-busy");
+    requestSubmit.innerHTML = submitButtonHTML;
+  }
 });
 
 renderDashboard();
