@@ -302,9 +302,9 @@ a { color: inherit; text-decoration: none; }
   .room-card-grid, .service-grid { display: flex; align-items: stretch; overflow-x: auto; overscroll-behavior-inline: contain; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
   .room-card-grid::-webkit-scrollbar, .service-grid::-webkit-scrollbar { display: none; }
   .room-card-grid { gap: 12px; margin: 0 -22px; padding: 3px 22px 13px; }
-  .room-card { flex: 0 0 44%; min-width: 148px; max-width: 210px; scroll-snap-align: start; }
+  .room-card { flex: 0 0 52%; min-width: 148px; max-width: 230px; scroll-snap-align: start; }
   .service-grid { gap: 14px; margin: 0 -22px; padding: 2px 22px 15px; }
-  .service-card { flex: 0 0 min(86%, 330px); }
+  .service-card { flex: 0 0 min(78%, 330px); }
   .room-card-grid:focus-visible, .service-grid:focus-visible { outline: 3px solid var(--sage); outline-offset: 3px; }
 }
 @media (max-width: 640px) {
@@ -353,7 +353,7 @@ a { color: inherit; text-decoration: none; }
   .space-actions .button { width: 100%; min-height: 48px; }
   .space-choice { padding: 11px; border-radius: 14px; }
   .space-choice strong { font-size: 16px; }
-  .room-card { flex-basis: 44%; min-width: 142px; padding: 14px; border-radius: 16px; }
+  .room-card { flex-basis: 52%; min-width: 142px; max-width: 230px; padding: 14px; border-radius: 16px; }
   .room-emoji { width: 33px; height: 33px; border-radius: 11px; font-size: 16px; }
   .room-card-count { font-size: 8px; }
   .room-card h3 { margin-top: 11px; font-size: 18px; }
@@ -364,7 +364,7 @@ a { color: inherit; text-decoration: none; }
   .about-process { margin-top: 13px; }
   .about-process-heading { align-items: flex-start; flex-direction: column; gap: 9px; }
   .about-process-steps { grid-template-columns: 1fr; gap: 13px; }
-  .service-card { flex-basis: min(86%, 330px); min-height: 240px; border-radius: 16px; }
+  .service-card { flex-basis: min(78%, 330px); min-height: 240px; border-radius: 16px; }
   .service-copy h3 { font-size: 22px; }
   .service-copy p { font-size: 11px; }
   .page-intro { margin-bottom: 24px; }
