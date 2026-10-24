@@ -1,6 +1,6 @@
 // Bump this release value when preparing a new app release.
 const CACHE_PREFIX = "resettable-app-";
-const CACHE_NAME = `${CACHE_PREFIX}v1.11.3`;
+const CACHE_NAME = `${CACHE_PREFIX}v1.11.4`;
 const SCOPE_URL = new URL(self.registration.scope);
 const SHELL_URL = new URL("./index.html", SCOPE_URL).href;
 
