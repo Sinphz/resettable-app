@@ -247,7 +247,6 @@ function renderSchedule() {
   if (!list) return;
   const ordered = [...resetSchedules].sort((a, b) => Number(a.status === "completed") - Number(b.status === "completed")
     || Date.parse(a.scheduledAt) - Date.parse(b.scheduledAt));
-  $("#scheduleEmpty").hidden = ordered.length > 0;
   list.replaceChildren(...ordered.map(item => {
     const space = getSpace(item.spaceId);
     const name = space?.name || `${item.spaceName} (space deleted)`;
@@ -1380,9 +1379,7 @@ function openScheduleEditor(item = null) {
     const option = document.createElement("option"); option.value = item.spaceId; option.textContent = `${item.spaceName} (space deleted)`; select.append(option);
   }
   select.value = currentSelection;
-  const localValue = item ? localDateTimeValue(item.scheduledAt) : "";
-  $("#scheduleDate").value = localValue.slice(0, 10);
-  $("#scheduleTime").value = localValue.slice(11, 16);
+  $("#scheduleDateTime").value = item ? localDateTimeValue(item.scheduledAt) : "";
   $("#scheduleDuration").value = item?.durationMinutes ?? "";
   $("#scheduleDialogTitle").textContent = item ? "Edit scheduled reset" : "Schedule a Reset";
   $("#scheduleStatus").textContent = "";
@@ -1393,11 +1390,10 @@ $("#closeScheduleDialog").addEventListener("click", () => scheduleDialog.close()
 $("#cancelScheduleDialog").addEventListener("click", () => scheduleDialog.close());
 scheduleForm.addEventListener("submit", event => {
   event.preventDefault();
-  const dateValue = $("#scheduleDate").value;
-  const timeValue = $("#scheduleTime").value;
-  const chosenDate = new Date(`${dateValue}T${timeValue}`);
+  const dateTimeValue = $("#scheduleDateTime").value;
+  const chosenDate = new Date(dateTimeValue);
   const minutes = $("#scheduleDuration").value;
-  if (!dateValue || !timeValue || !Number.isFinite(chosenDate.getTime()) || chosenDate.getTime() <= Date.now()) {
+  if (!dateTimeValue || !Number.isFinite(chosenDate.getTime()) || chosenDate.getTime() <= Date.now()) {
     $("#scheduleStatus").textContent = "Choose a future date and time for your reset."; return;
   }
   if (minutes && !["10", "15", "30"].includes(minutes)) {
