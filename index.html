@@ -18,7 +18,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
-  <script src="script.js?v=mobile-interface-v2" defer></script>
+  <script src="script.js?v=reset-schedule-v1" defer></script>
 </head>
 <body>
   <header class="app-header">
@@ -107,6 +107,11 @@
 
     <section id="rooms" class="view content-wrap inner-view" hidden>
       <div class="page-intro"><p class="eyebrow">ONE STEP AT A TIME</p><h1>My Reset</h1><p>Explore spaces across Home, Outdoor, and Workspaces &amp; Organisations.</p></div>
+      <section class="panel schedule-panel" aria-labelledby="scheduleTitle">
+        <div class="schedule-heading"><div><span class="pill">MAKE TIME FOR YOU</span><h2 id="scheduleTitle">My Reset Schedule</h2></div><button class="button button-dark" type="button" id="scheduleResetButton">Schedule a Reset</button></div>
+        <p class="schedule-empty" id="scheduleEmpty">A little time set aside can make all the difference. Add a reset when you’re ready.</p>
+        <div class="schedule-list" id="scheduleList" aria-live="polite"></div>
+      </section>
       <div class="room-tabs" id="categoryTabs" role="tablist" aria-label="Choose a category"></div>
       <div class="space-actions"><button class="button button-dark" type="button" id="addSpaceButton">Add Your Own Space <span aria-hidden="true">＋</span></button></div>
       <div class="space-selector-grid" id="spaceCards" aria-label="Spaces in this category"></div>
@@ -199,8 +204,8 @@
 
   <footer class="app-footer"><div class="footer-inner"><span>© Resettable · Organisation &amp; Decluttering</span><a class="footer-brand-link" href="https://resettable.co.uk" target="_blank" rel="noopener" aria-label="Visit resettable.co.uk"><img src="assets/resettable-future-logo.png" alt="Resettable"><span>resettable.co.uk</span></a></div></footer>
   <nav class="mobile-nav" aria-label="Mobile navigation">
-    <button type="button" data-view="home" class="active"><span aria-hidden="true">⌂</span>Home</button>
-    <button type="button" data-view="rooms"><span aria-hidden="true">▦</span>My Reset</button>
+    <button type="button" data-view="home" class="active"><svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Home</button>
+    <button type="button" data-view="rooms"><svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v6h6"/><path d="M21 12a9 9 0 0 0-15-6.7L3 8"/><path d="M21 22v-6h-6"/><path d="M3 12a9 9 0 0 0 15 6.7l3-2.7"/></svg>My Reset</button>
     <button type="button" data-view="request"><span aria-hidden="true">＋</span>Request</button>
     <button type="button" data-view="about"><span aria-hidden="true">✳</span>About</button>
   </nav>
@@ -213,6 +218,16 @@
       <div id="customTaskFields" class="custom-task-fields"></div>
       <p id="customSpaceStatus" class="form-status" role="status" aria-live="polite"></p>
       <div class="space-dialog-actions"><button class="button button-soft" type="button" id="cancelSpaceDialog">Cancel</button><button class="button button-dark" type="submit" id="saveCustomSpace">Create space</button></div>
+    </form>
+  </dialog>
+  <dialog class="space-dialog schedule-dialog" id="scheduleDialog" aria-labelledby="scheduleDialogTitle">
+    <form class="space-dialog-form" id="scheduleForm">
+      <div class="space-dialog-heading"><div><p class="eyebrow">A MOMENT FOR YOURSELF</p><h2 id="scheduleDialogTitle">Schedule a Reset</h2></div><button class="dialog-close" type="button" id="closeScheduleDialog" aria-label="Close">×</button></div>
+      <div class="field"><label for="scheduleSpace">Reset space</label><select id="scheduleSpace" required></select></div>
+      <div class="field"><label for="scheduleDateTime">Date and time</label><input id="scheduleDateTime" type="datetime-local" required></div>
+      <div class="field"><label for="scheduleDuration">Duration <span class="optional-label">(optional)</span></label><select id="scheduleDuration"><option value="">No duration</option><option value="10">10 minutes</option><option value="15">15 minutes</option><option value="30">30 minutes</option></select></div>
+      <p id="scheduleStatus" class="form-status" role="status" aria-live="polite"></p>
+      <div class="space-dialog-actions"><button class="button button-soft" type="button" id="cancelScheduleDialog">Cancel</button><button class="button button-dark" type="submit">Save reset</button></div>
     </form>
   </dialog>
 </body>

@@ -122,6 +122,12 @@ const storageKey = "resettable-checklist-v1";
 const customSpacesStorageKey = "resettable-custom-spaces-v1";
 const spaceGoalsStorageKey = "resettable-space-goals-v1";
 const resetSessionStorageKey = "resettable-reset-session-v1";
+const resetScheduleStorageKey = "resettable-reset-schedule-v1";
+let resetSchedules = [];
+try {
+  const parsedSchedules = JSON.parse(localStorage.getItem(resetScheduleStorageKey) || "[]");
+  if (Array.isArray(parsedSchedules)) resetSchedules = parsedSchedules.filter(item => isValidScheduleItem(item));
+} catch { resetSchedules = []; }
 let saved = {};
 try {
   saved = JSON.parse(localStorage.getItem(storageKey) || "{}");
@@ -220,6 +226,47 @@ function getSpace(spaceId) {
   if (room) return { ...room, isCustom: false };
   const customSpace = customSpaces.find(item => item.id === spaceId);
   return customSpace ? { ...customSpace, isCustom: true } : null;
+}
+
+function isValidScheduleItem(item) {
+  return isPlainRecord(item) && typeof item.id === "string" && item.id.length > 0 && item.id.length <= 200
+    && typeof item.spaceId === "string" && item.spaceId.length > 0 && item.spaceId.length <= 200
+    && typeof item.spaceName === "string" && item.spaceName.length > 0 && item.spaceName.length <= 60
+    && typeof item.scheduledAt === "string" && Number.isFinite(Date.parse(item.scheduledAt))
+    && new Date(item.scheduledAt).toISOString() === item.scheduledAt
+    && (item.durationMinutes === null || [10, 15, 30].includes(item.durationMinutes))
+    && ["scheduled", "completed"].includes(item.status);
+}
+
+function saveResetSchedules(schedules = resetSchedules) {
+  localStorage.setItem(resetScheduleStorageKey, JSON.stringify(schedules));
+}
+
+function renderSchedule() {
+  const list = $("#scheduleList");
+  if (!list) return;
+  const ordered = [...resetSchedules].sort((a, b) => Number(a.status === "completed") - Number(b.status === "completed")
+    || Date.parse(a.scheduledAt) - Date.parse(b.scheduledAt));
+  $("#scheduleEmpty").hidden = ordered.length > 0;
+  list.replaceChildren(...ordered.map(item => {
+    const space = getSpace(item.spaceId);
+    const name = space?.name || `${item.spaceName} (space deleted)`;
+    const date = new Date(item.scheduledAt);
+    const card = document.createElement("article");
+    card.className = `schedule-item${item.status === "completed" ? " completed" : ""}`;
+    const main = document.createElement("div"); main.className = "schedule-item-main";
+    const title = document.createElement("h3"); title.textContent = name;
+    const detail = document.createElement("p"); detail.textContent = `${date.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" })} · ${date.toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit" })} · ${item.durationMinutes ? `${item.durationMinutes} minutes` : "Duration not set"}`;
+    const status = document.createElement("span"); status.className = "schedule-status"; status.textContent = item.status === "completed" ? "Completed" : "Upcoming";
+    main.append(title, detail, status);
+    const actions = document.createElement("div"); actions.className = "schedule-item-actions";
+    const edit = document.createElement("button"); edit.type = "button"; edit.textContent = "Edit"; edit.dataset.scheduleAction = "edit"; edit.dataset.scheduleId = item.id; actions.append(edit);
+    if (item.status !== "completed") {
+      const complete = document.createElement("button"); complete.type = "button"; complete.textContent = "Mark completed"; complete.dataset.scheduleAction = "complete"; complete.dataset.scheduleId = item.id; actions.append(complete);
+    }
+    const remove = document.createElement("button"); remove.type = "button"; remove.className = "schedule-delete"; remove.textContent = "Delete"; remove.dataset.scheduleAction = "delete"; remove.dataset.scheduleId = item.id; actions.append(remove);
+    card.append(main, actions); return card;
+  }));
 }
 
 function isDone(room, taskIndex) {
@@ -412,6 +459,7 @@ function openCategory(categoryId) {
 }
 
 function renderRoom() {
+  renderSchedule();
   const room = getSpace(currentRoom) || rooms[0];
   if (goalEditorSpaceId && goalEditorSpaceId !== room.id) goalEditorSpaceId = null;
   currentRoom = room.id;
@@ -1076,9 +1124,9 @@ requestForm.addEventListener("submit", async event => {
 });
 
 const backupFormat = "resettable-my-reset-backup";
-const backupVersion = 1;
+const backupVersion = 2;
 const backupMaxBytes = 1024 * 1024;
-const backupStorageKeys = [storageKey, customSpacesStorageKey, spaceGoalsStorageKey, resetSessionStorageKey];
+const backupStorageKeys = [storageKey, customSpacesStorageKey, spaceGoalsStorageKey, resetSessionStorageKey, resetScheduleStorageKey];
 const backupStatus = $("#backupRestoreStatus");
 const restoreFileInput = $("#restoreFileInput");
 let backupObjectUrl = null;
@@ -1103,10 +1151,13 @@ function isPlainRecord(value) {
 }
 
 function validateBackupData(data) {
-  if (!isPlainRecord(data) || Object.keys(data).length !== backupStorageKeys.length
-      || backupStorageKeys.some(key => !Object.prototype.hasOwnProperty.call(data, key))) {
+  const legacyKeys = backupStorageKeys.filter(key => key !== resetScheduleStorageKey);
+  if (!isPlainRecord(data) || (Object.keys(data).length !== backupStorageKeys.length && Object.keys(data).length !== legacyKeys.length)
+      || legacyKeys.some(key => !Object.prototype.hasOwnProperty.call(data, key))
+      || Object.keys(data).some(key => !backupStorageKeys.includes(key))) {
     throw new Error("This file is missing one or more Reset data sections.");
   }
+  if (!Object.prototype.hasOwnProperty.call(data, resetScheduleStorageKey)) data[resetScheduleStorageKey] = [];
 
   const progress = data[storageKey];
   if (!isPlainRecord(progress) || Object.keys(progress).length > 10000
@@ -1174,6 +1225,13 @@ function validateBackupData(data) {
       throw new Error("The completed session details in this file are not valid.");
     }
   }
+  const schedules = data[resetScheduleStorageKey];
+  if (!Array.isArray(schedules) || schedules.length > 1000) throw new Error("The scheduled resets in this file are not valid.");
+  const scheduleIds = new Set();
+  for (const item of schedules) {
+    if (!isValidScheduleItem(item) || scheduleIds.has(item.id)) throw new Error("A scheduled reset in this file is incomplete or invalid.");
+    scheduleIds.add(item.id);
+  }
   return data;
 }
 
@@ -1182,7 +1240,8 @@ function readSavedDataForBackup() {
     [storageKey]: {},
     [customSpacesStorageKey]: [],
     [spaceGoalsStorageKey]: {},
-    [resetSessionStorageKey]: null
+    [resetSessionStorageKey]: null,
+    [resetScheduleStorageKey]: []
   };
   const data = {};
   for (const key of backupStorageKeys) {
@@ -1207,7 +1266,7 @@ function validateBackupFile(parsed) {
   if (!isPlainRecord(parsed) || parsed.format !== backupFormat) {
     throw new Error("This does not look like a Resettable My Reset backup.");
   }
-  if (parsed.version !== backupVersion) {
+  if (![1, backupVersion].includes(parsed.version)) {
     throw new Error("This backup version is not supported by this app.");
   }
   if (Object.keys(parsed).some(key => !["format", "version", "createdAt", "data"].includes(key))) {
@@ -1296,6 +1355,77 @@ restoreFileInput.addEventListener("change", async () => {
   } finally {
     restoreFileInput.value = "";
   }
+});
+
+const scheduleDialog = $("#scheduleDialog");
+const scheduleForm = $("#scheduleForm");
+let editingScheduleId = null;
+function localDateTimeValue(value) {
+  const date = new Date(value);
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 16);
+}
+function openScheduleEditor(item = null) {
+  editingScheduleId = item?.id || null;
+  const select = $("#scheduleSpace");
+  const currentSelection = item?.spaceId || currentRoom;
+  const spaceChoices = allSpaces();
+  select.replaceChildren(...spaceChoices.map(space => {
+    const option = document.createElement("option"); option.value = space.id; option.textContent = space.name; return option;
+  }));
+  if (item && !spaceChoices.some(space => space.id === item.spaceId)) {
+    const option = document.createElement("option"); option.value = item.spaceId; option.textContent = `${item.spaceName} (space deleted)`; select.append(option);
+  }
+  select.value = currentSelection;
+  $("#scheduleDateTime").value = item ? localDateTimeValue(item.scheduledAt) : "";
+  $("#scheduleDuration").value = item?.durationMinutes ?? "";
+  $("#scheduleDialogTitle").textContent = item ? "Edit scheduled reset" : "Schedule a Reset";
+  $("#scheduleStatus").textContent = "";
+  scheduleDialog.showModal();
+}
+$("#scheduleResetButton").addEventListener("click", () => openScheduleEditor());
+$("#closeScheduleDialog").addEventListener("click", () => scheduleDialog.close());
+$("#cancelScheduleDialog").addEventListener("click", () => scheduleDialog.close());
+scheduleForm.addEventListener("submit", event => {
+  event.preventDefault();
+  const rawDate = $("#scheduleDateTime").value;
+  const chosenDate = new Date(rawDate);
+  const minutes = $("#scheduleDuration").value;
+  if (!rawDate || !Number.isFinite(chosenDate.getTime()) || chosenDate.getTime() <= Date.now()) {
+    $("#scheduleStatus").textContent = "Choose a future date and time for your reset."; return;
+  }
+  if (minutes && !["10", "15", "30"].includes(minutes)) {
+    $("#scheduleStatus").textContent = "Choose 10, 15 or 30 minutes."; return;
+  }
+  const space = getSpace($("#scheduleSpace").value);
+  const prior = resetSchedules.find(item => item.id === editingScheduleId);
+  const entry = {
+    id: prior?.id || createId("schedule"),
+    spaceId: $("#scheduleSpace").value,
+    spaceName: space?.name || prior?.spaceName || "Deleted space",
+    scheduledAt: chosenDate.toISOString(),
+    durationMinutes: minutes ? Number(minutes) : null,
+    status: prior?.status || "scheduled"
+  };
+  if (!isValidScheduleItem(entry)) { $("#scheduleStatus").textContent = "Check the reset details and try again."; return; }
+  const nextSchedules = prior
+    ? resetSchedules.map(item => item.id === prior.id ? entry : item)
+    : [...resetSchedules, entry];
+  try { saveResetSchedules(nextSchedules); } catch { $("#scheduleStatus").textContent = "Your reset could not be saved on this device. Please try again."; return; }
+  resetSchedules = nextSchedules;
+  scheduleDialog.close(); renderSchedule();
+});
+$("#scheduleList").addEventListener("click", event => {
+  const button = event.target.closest("button[data-schedule-action]");
+  if (!button) return;
+  const item = resetSchedules.find(candidate => candidate.id === button.dataset.scheduleId);
+  if (!item) return;
+  if (button.dataset.scheduleAction === "edit") { openScheduleEditor(item); return; }
+  const nextSchedules = button.dataset.scheduleAction === "delete"
+    ? resetSchedules.filter(candidate => candidate.id !== item.id)
+    : resetSchedules.map(candidate => candidate.id === item.id ? { ...candidate, status: "completed" } : candidate);
+  try { saveResetSchedules(nextSchedules); resetSchedules = nextSchedules; renderSchedule(); }
+  catch { window.alert("The change could not be saved on this device. Please try again."); }
 });
 
 window.addEventListener("beforeunload", () => {
