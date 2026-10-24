@@ -299,7 +299,7 @@ a { color: inherit; text-decoration: none; }
 @media (max-width: 760px) {
   .scroll-hint { display: block; margin: -6px 0 9px; color: var(--muted); font-size: 9px; text-align: right; }
   .scroll-hint span { color: var(--sage); font-size: 12px; }
-  .room-card-grid, .service-grid { display: flex; align-items: stretch; overflow-x: auto; overscroll-behavior-inline: contain; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .room-card-grid, .service-grid { display: flex; align-items: stretch; overflow-x: auto; overscroll-behavior-inline: contain; scroll-snap-type: x mandatory; scroll-padding-inline: 22px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
   .room-card-grid::-webkit-scrollbar, .service-grid::-webkit-scrollbar { display: none; }
   .room-card-grid { gap: 12px; margin: 0 -22px; padding: 3px 22px 13px; }
   .room-card { flex: 0 0 52%; min-width: 148px; max-width: 230px; scroll-snap-align: start; }
@@ -308,6 +308,7 @@ a { color: inherit; text-decoration: none; }
   .room-card-grid:focus-visible, .service-grid:focus-visible { outline: 3px solid var(--sage); outline-offset: 3px; }
 }
 @media (max-width: 640px) {
+  .room-card-grid, .service-grid { scroll-padding-inline: 18px; }
   .data-backup { grid-template-columns: 1fr; gap: 12px; }
   .data-backup-actions { display: grid; grid-template-columns: 1fr 1fr; }
   .data-backup-actions .button { min-height: 44px; padding: 0 8px; font-size: 9px; }
