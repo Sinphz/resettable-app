@@ -259,13 +259,16 @@ function renderSchedule() {
     const detail = document.createElement("p"); detail.textContent = `${date.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" })} · ${date.toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit" })} · ${item.durationMinutes ? `${item.durationMinutes} minutes` : "Duration not set"}`;
     const status = document.createElement("span"); status.className = "schedule-status"; status.textContent = item.status === "completed" ? "Completed" : "Upcoming";
     main.append(title, detail, status);
+    const manage = document.createElement("details"); manage.className = "schedule-manage";
+    const manageSummary = document.createElement("summary"); manageSummary.textContent = "Manage";
     const actions = document.createElement("div"); actions.className = "schedule-item-actions";
     const edit = document.createElement("button"); edit.type = "button"; edit.textContent = "Edit"; edit.dataset.scheduleAction = "edit"; edit.dataset.scheduleId = item.id; actions.append(edit);
     if (item.status !== "completed") {
-      const complete = document.createElement("button"); complete.type = "button"; complete.textContent = "Mark completed"; complete.dataset.scheduleAction = "complete"; complete.dataset.scheduleId = item.id; actions.append(complete);
+      const complete = document.createElement("button"); complete.type = "button"; complete.textContent = "Mark complete"; complete.dataset.scheduleAction = "complete"; complete.dataset.scheduleId = item.id; actions.append(complete);
     }
     const remove = document.createElement("button"); remove.type = "button"; remove.className = "schedule-delete"; remove.textContent = "Delete"; remove.dataset.scheduleAction = "delete"; remove.dataset.scheduleId = item.id; actions.append(remove);
-    card.append(main, actions); return card;
+    manage.append(manageSummary, actions);
+    card.append(main, manage); return card;
   }));
 }
 
@@ -1377,7 +1380,9 @@ function openScheduleEditor(item = null) {
     const option = document.createElement("option"); option.value = item.spaceId; option.textContent = `${item.spaceName} (space deleted)`; select.append(option);
   }
   select.value = currentSelection;
-  $("#scheduleDateTime").value = item ? localDateTimeValue(item.scheduledAt) : "";
+  const localValue = item ? localDateTimeValue(item.scheduledAt) : "";
+  $("#scheduleDate").value = localValue.slice(0, 10);
+  $("#scheduleTime").value = localValue.slice(11, 16);
   $("#scheduleDuration").value = item?.durationMinutes ?? "";
   $("#scheduleDialogTitle").textContent = item ? "Edit scheduled reset" : "Schedule a Reset";
   $("#scheduleStatus").textContent = "";
@@ -1388,10 +1393,11 @@ $("#closeScheduleDialog").addEventListener("click", () => scheduleDialog.close()
 $("#cancelScheduleDialog").addEventListener("click", () => scheduleDialog.close());
 scheduleForm.addEventListener("submit", event => {
   event.preventDefault();
-  const rawDate = $("#scheduleDateTime").value;
-  const chosenDate = new Date(rawDate);
+  const dateValue = $("#scheduleDate").value;
+  const timeValue = $("#scheduleTime").value;
+  const chosenDate = new Date(`${dateValue}T${timeValue}`);
   const minutes = $("#scheduleDuration").value;
-  if (!rawDate || !Number.isFinite(chosenDate.getTime()) || chosenDate.getTime() <= Date.now()) {
+  if (!dateValue || !timeValue || !Number.isFinite(chosenDate.getTime()) || chosenDate.getTime() <= Date.now()) {
     $("#scheduleStatus").textContent = "Choose a future date and time for your reset."; return;
   }
   if (minutes && !["10", "15", "30"].includes(minutes)) {
