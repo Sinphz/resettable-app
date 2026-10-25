@@ -1,6 +1,6 @@
 // Bump this release value when preparing a new app release.
 const CACHE_PREFIX = "resettable-app-";
-const CACHE_NAME = `${CACHE_PREFIX}v1.11.18`;
+const CACHE_NAME = `${CACHE_PREFIX}v1.13.7`;
 const SCOPE_URL = new URL(self.registration.scope);
 const SHELL_URL = new URL("./index.html", SCOPE_URL).href;
 
@@ -14,6 +14,22 @@ const CORE_FILES = [
   "assets/hero-desktop.jpg",
   "assets/hero-tablet.jpg",
   "assets/hero-mobile.jpg",
+  "assets/tips/modern-tip-01.png",
+  "assets/tips/modern-tip-02.png",
+  "assets/tips/modern-tip-03.png",
+  "assets/tips/modern-tip-04.png",
+  "assets/tips/modern-tip-05.png",
+  "assets/tips/modern-tip-06.png",
+  "assets/tips/modern-tip-07.png",
+  "assets/tips/modern-tip-08.png",
+  "assets/tips/modern-tip-09.png",
+  "assets/tips/modern-tip-10.png",
+  "assets/tips/modern-tip-11.png",
+  "assets/tips/modern-tip-12.png",
+  "assets/tips/modern-tip-13.png",
+  "assets/tips/modern-tip-14.png",
+  "assets/tips/modern-tip-15.png",
+  "assets/tips/modern-tip-16.png",
   "assets/home-card.jpg",
   "assets/outdoor-card.jpg",
   "assets/workspaces-card.jpg",

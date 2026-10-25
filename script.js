@@ -1,3 +1,300 @@
+// Add each weekly tip here with a higher number and its matching local image.
+// Copy verified wording only; omit description/closing when unavailable.
+// Add new image paths to service-worker.js CORE_FILES and bump the cache version.
+const resettableTips = [
+  {
+    "number": 1,
+    "title": "Keep the things you use most within reach",
+    "description": "Everyday essentials are easier to use and put away when they’re close at hand.",
+    "wordingSource": "Transcribed from the supplied high-resolution PNG graphic.",
+    "adviceInImage": true,
+    "image": {
+      "src": "assets/tips/modern-tip-01.png",
+      "alt": "Keep the things you use most within reach. Everyday essentials are easier to use and put away when they’re close at hand."
+    }
+  },
+  {
+    "number": 2,
+    "title": "Give everything a home",
+    "description": "A dedicated place for each item makes it easier to find, use and put away.",
+    "wordingSource": "Transcribed from the supplied high-resolution PNG graphic.",
+    "adviceInImage": true,
+    "image": {
+      "src": "assets/tips/modern-tip-02.png",
+      "alt": "Give everything a home. A dedicated place for each item makes it easier to find, use and put away."
+    }
+  },
+  {
+    "number": 3,
+    "title": "Keep similar items together",
+    "description": "Grouping like items saves time and makes your space feel calmer and more organised.",
+    "wordingSource": "Transcribed from the supplied high-resolution PNG graphic.",
+    "adviceInImage": true,
+    "image": {
+      "src": "assets/tips/modern-tip-03.png",
+      "alt": "Keep similar items together. Grouping like items saves time and makes your space feel calmer and more organised."
+    }
+  },
+  {
+    "number": 4,
+    "title": "Use clear storage where possible",
+    "description": "Seeing what you have helps reduce waste and makes it easier to stay organised.",
+    "wordingSource": "Transcribed from the supplied high-resolution PNG graphic.",
+    "adviceInImage": true,
+    "image": {
+      "src": "assets/tips/modern-tip-04.png",
+      "alt": "Use clear storage where possible. Seeing what you have helps reduce waste and makes it easier to stay organised."
+    }
+  },
+  {
+    "number": 5,
+    "title": "Create a drop zone",
+    "description": "A designated spot for everyday items like keys, bags and coats helps keep your home tidy and stress-free.",
+    "wordingSource": "Transcribed from the supplied high-resolution PNG graphic.",
+    "adviceInImage": true,
+    "image": {
+      "src": "assets/tips/modern-tip-05.png",
+      "alt": "Create a drop zone. A designated spot for everyday items like keys, bags and coats helps keep your home tidy and stress-free."
+    }
+  },
+  {
+    "number": 6,
+    "title": "Make the most of your space",
+    "description": "Use under-bed storage, shelves and vertical space to keep more organised without creating clutter.",
+    "wordingSource": "Transcribed from the supplied high-resolution PNG graphic.",
+    "adviceInImage": true,
+    "image": {
+      "src": "assets/tips/modern-tip-06.png",
+      "alt": "Make the most of your space. Use under-bed storage, shelves and vertical space to keep more organised without creating clutter."
+    }
+  },
+  {
+    "number": 7,
+    "title": "Use labels to stay organised",
+    "description": "Labels make it easier to find things, keep spaces tidy and help everyone know where items belong.",
+    "wordingSource": "Transcribed from the supplied high-resolution PNG graphic.",
+    "adviceInImage": true,
+    "image": {
+      "src": "assets/tips/modern-tip-07.png",
+      "alt": "Use labels to stay organised. Labels make it easier to find things, keep spaces tidy and help everyone know where items belong."
+    }
+  },
+  {
+    "number": 8,
+    "title": "Use organisers to create order",
+    "description": "Drawer dividers, boxes and trays help keep similar items together, making it easier to find what you need.",
+    "wordingSource": "Transcribed from the supplied high-resolution PNG graphic.",
+    "adviceInImage": true,
+    "image": {
+      "src": "assets/tips/modern-tip-08.png",
+      "alt": "Use organisers to create order. Drawer dividers, boxes and trays help keep similar items together, making it easier to find what you need."
+    }
+  },
+  {
+    "number": 9,
+    "title": "Store similar items together",
+    "description": "Keeping similar items together makes them easier to find, helps you stay organised and saves time.",
+    "wordingSource": "Transcribed from the supplied high-resolution PNG graphic.",
+    "adviceInImage": true,
+    "image": {
+      "src": "assets/tips/modern-tip-09.png",
+      "alt": "Store similar items together. Keeping similar items together makes them easier to find, helps you stay organised and saves time."
+    }
+  },
+  {
+    "number": 10,
+    "title": "Keep high-traffic areas clutter-free",
+    "description": "A tidy entrance, kitchen worktop and other busy spaces make everyday life easier and help your home feel calmer.",
+    "wordingSource": "Transcribed from the supplied high-resolution PNG graphic.",
+    "adviceInImage": true,
+    "image": {
+      "src": "assets/tips/modern-tip-10.png",
+      "alt": "Keep high-traffic areas clutter-free. A tidy entrance, kitchen worktop and other busy spaces make everyday life easier and help your home feel calmer."
+    }
+  },
+  {
+    "number": 11,
+    "title": "Use matching hangers",
+    "description": "Matching hangers create a neater look, save space and make it easier to find and keep your clothes organised.",
+    "wordingSource": "Transcribed from the supplied high-resolution PNG graphic.",
+    "adviceInImage": true,
+    "image": {
+      "src": "assets/tips/modern-tip-11.png",
+      "alt": "Use matching hangers. Matching hangers create a neater look, save space and make it easier to find and keep your clothes organised."
+    }
+  },
+  {
+    "number": 12,
+    "title": "Use clear labels",
+    "description": "Clear labels make it easy to see what’s inside, help everyone find things quickly and keep your space organised.",
+    "wordingSource": "Transcribed from the supplied high-resolution PNG graphic.",
+    "adviceInImage": true,
+    "image": {
+      "src": "assets/tips/modern-tip-12.png",
+      "alt": "Use clear labels. Clear labels make it easy to see what’s inside, help everyone find things quickly and keep your space organised."
+    }
+  },
+  {
+    "number": 13,
+    "title": "Use baskets and bins",
+    "description": "Baskets and bins keep similar items together, make the most of your space and help maintain a tidy, organised home.",
+    "wordingSource": "Transcribed from the supplied high-resolution PNG graphic.",
+    "adviceInImage": true,
+    "image": {
+      "src": "assets/tips/modern-tip-13.png",
+      "alt": "Use baskets and bins. Baskets and bins keep similar items together, make the most of your space and help maintain a tidy, organised home."
+    }
+  },
+  {
+    "number": 14,
+    "title": "Use airtight containers",
+    "description": "Airtight containers keep similar items together, keep food fresher for longer and make your cupboards look neater.",
+    "wordingSource": "Transcribed from the supplied high-resolution PNG graphic.",
+    "adviceInImage": true,
+    "image": {
+      "src": "assets/tips/modern-tip-14.png",
+      "alt": "Use airtight containers. Airtight containers keep similar items together, keep food fresher for longer and make your cupboards look neater."
+    }
+  },
+  {
+    "number": 15,
+    "title": "Leave a little breathing room",
+    "description": "Avoid filling every shelf and drawer completely. Leaving some spare space makes things easier to find, access and put away.",
+    "wordingSource": "Transcribed from the supplied high-resolution PNG graphic.",
+    "adviceInImage": true,
+    "image": {
+      "src": "assets/tips/modern-tip-15.png",
+      "alt": "Leave a little breathing room. Avoid filling every shelf and drawer completely. Leaving some spare space makes things easier to find, access and put away."
+    }
+  },
+  {
+    "number": 16,
+    "title": "Declutter before you organise.",
+    "description": "Before buying storage boxes or rearranging a space, take a moment to decide what you actually need and use. Less clutter means less to organise.",
+    "wordingSource": "Transcribed from the supplied high-resolution PNG graphic.",
+    "adviceInImage": true,
+    "image": {
+      "src": "assets/tips/modern-tip-16.png",
+      "alt": "Declutter before you organise. Before buying storage boxes or rearranging a space, take a moment to decide what you actually need and use. Less clutter means less to organise."
+    }
+  }
+];
+
+function createTipArticle(tip, headingTag = "h3") {
+  const article = document.createElement("article");
+  article.className = "tip-entry";
+  if (!tip.adviceInImage) {
+    const heading = document.createElement(headingTag);
+    heading.textContent = tip.title;
+    article.append(heading);
+  }
+  const image = document.createElement("img");
+  image.src = tip.image.src;
+  image.alt = tip.image.alt;
+  image.decoding = "async";
+  article.append(image);
+  if (tip.description && !tip.adviceInImage) {
+    const description = document.createElement("p");
+    description.textContent = tip.description;
+    article.append(description);
+  }
+  if (tip.closing && !tip.adviceInImage) {
+    const closing = document.createElement("p");
+    closing.className = "tip-closing";
+    closing.textContent = tip.closing;
+    article.append(closing);
+  }
+  return article;
+}
+
+let discoveredTipNumber = null;
+let tipReturnSource = "collection";
+let tipReturnButton = null;
+
+function showTipsCollection(restoreFocus = false) {
+  document.getElementById("tipsCollection").hidden = false;
+  document.getElementById("tipsArchive").hidden = true;
+  document.getElementById("tipDetail").hidden = true;
+  if (restoreFocus) document.getElementById("viewPreviousTips").focus();
+}
+
+function showTipsArchive() {
+  document.getElementById("tipsCollection").hidden = true;
+  document.getElementById("tipsArchive").hidden = false;
+  document.getElementById("tipDetail").hidden = true;
+  document.getElementById("backFromArchive").focus();
+}
+
+function openTip(tip, source = "collection", button = null) {
+  tipReturnSource = source;
+  tipReturnButton = button;
+  document.getElementById("tipDetailContent").replaceChildren(createTipArticle(tip, "h2"));
+  document.getElementById("tipsCollection").hidden = true;
+  document.getElementById("tipsArchive").hidden = true;
+  document.getElementById("tipDetail").hidden = false;
+  document.getElementById("backToTips").textContent = source === "archive" ? "← Back to Previous Tips" : "← Back to Tips collection";
+  document.getElementById("backToTips").focus();
+  window.scrollTo({ top: 0, behavior: "instant" });
+}
+
+function returnFromTip() {
+  if (tipReturnSource === "archive") showTipsArchive();
+  else showTipsCollection();
+  tipReturnButton?.focus();
+}
+
+function shufflePreviousTip() {
+  const previous = [...resettableTips].sort((a, b) => b.number - a.number).slice(1);
+  const choices = previous.filter(tip => tip.number !== discoveredTipNumber);
+  const pool = choices.length ? choices : previous;
+  const tip = pool[Math.floor(Math.random() * pool.length)];
+  const container = document.getElementById("discoveredTip");
+  container.replaceChildren();
+  document.getElementById("shuffleTip").disabled = previous.length < 2;
+  if (!tip) return;
+  discoveredTipNumber = tip.number;
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "tip-discovery-image";
+  button.setAttribute("aria-label", `Open tip: ${tip.title}`);
+  const image = document.createElement("img");
+  image.src = tip.image.src;
+  image.alt = tip.image.alt;
+  image.decoding = "async";
+  button.append(image);
+  button.addEventListener("click", () => openTip(tip, "collection", button));
+  container.append(button);
+}
+
+function renderTips() {
+  const tips = [...resettableTips].sort((a, b) => b.number - a.number);
+  const featured = document.getElementById("featuredTip");
+  featured.replaceChildren();
+  if (tips[0]) featured.append(createTipArticle(tips[0]));
+  const list = document.getElementById("previousTips");
+  list.replaceChildren();
+  tips.slice(1).forEach(tip => {
+    const row = document.createElement("button");
+    row.type = "button";
+    row.className = "tip-row";
+    row.dataset.tip = tip.number;
+    const image = document.createElement("img");
+    image.src = tip.image.src;
+    image.alt = "";
+    image.loading = "lazy";
+    image.decoding = "async";
+    const title = document.createElement("span");
+    title.textContent = tip.title;
+    const chevron = document.createElement("span");
+    chevron.className = "tip-row-chevron";
+    chevron.setAttribute("aria-hidden", "true");
+    chevron.textContent = "›";
+    row.append(image, title, chevron);
+    row.addEventListener("click", () => openTip(tip, "archive", row));
+    list.append(row);
+  });
+}
+
 const categories = [
   { id: "home", name: "Home", description: "Everyday spaces for a calmer home." },
   { id: "outdoor", name: "Outdoor", description: "Make more of the spaces just outside." },
@@ -963,12 +1260,17 @@ $("#deleteCustomSpace").addEventListener("click", () => {
 
 let currentViewId = "home";
 let settingsReturnView = "home";
+let aboutFromSettings = false;
 
 function showView(viewId) {
   const view = document.getElementById(viewId);
   if (!view || !view.classList.contains("view")) return;
 
-  if (viewId === "settings" && currentViewId !== "settings") settingsReturnView = currentViewId;
+  // Returning from About keeps Settings' original Back destination.
+  if (viewId === "settings" && currentViewId !== "settings"
+      && !(currentViewId === "about" && aboutFromSettings)) settingsReturnView = currentViewId;
+  if (viewId === "about") aboutFromSettings = currentViewId === "settings";
+  $("#aboutSettingsReturn").hidden = !(viewId === "about" && aboutFromSettings);
   currentViewId = viewId;
 
   $$(".view").forEach(section => {
@@ -983,6 +1285,7 @@ function showView(viewId) {
     }
   });
 
+  if (viewId === "tips") showTipsCollection();
   if (viewId === "rooms") renderRoom();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
@@ -1451,6 +1754,12 @@ document.addEventListener("visibilitychange", () => {
 window.addEventListener("pageshow", updateSessionCountdown);
 window.addEventListener("focus", updateSessionCountdown);
 
+document.getElementById("backToTips").addEventListener("click", returnFromTip);
+document.getElementById("shuffleTip").addEventListener("click", shufflePreviousTip);
+document.getElementById("viewPreviousTips").addEventListener("click", showTipsArchive);
+document.getElementById("backFromArchive").addEventListener("click", () => showTipsCollection(true));
+shufflePreviousTip();
+renderTips();
 renderDashboard();
 renderRoom();
 syncSessionTicker();
