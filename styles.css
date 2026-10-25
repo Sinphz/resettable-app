@@ -274,10 +274,10 @@ a { color: inherit; text-decoration: none; }
 .request-photo { min-height: 210px; background: linear-gradient(0deg, rgba(15,59,39,.1), transparent), url("assets/home-card.jpg") center / cover; }
 .aside-copy { padding: 23px; }
 .aside-copy .eyebrow { color: var(--sage-light); }
-.aside-copy h2 { margin: 8px 0; font: 500 27px/1.2 "Playfair Display", Georgia, serif; }
+.request-aside .aside-copy h2 { margin: 8px 0; font: 500 24px/1.2 "Playfair Display", Georgia, serif; white-space: normal; overflow-wrap: anywhere; }
 .aside-copy > p:not(.eyebrow) { color: rgba(255,255,255,.75); font-size: 12px; }
 .aside-copy > .aside-supporting { margin: 6px 0 0; }
-.aside-copy > .aside-supporting + p { margin-top: 8px; }
+.request-aside .aside-copy > .aside-supporting + p { margin-top: 24px; }
 .aside-copy a { display: inline-block; margin-top: 6px; color: var(--sage-light); font-size: 11px; font-weight: 700; }
 .about-story h2 { max-width: 510px; margin: 17px 0 15px; color: var(--deep); font: 500 32px/1.2 "Playfair Display", Georgia, serif; }
 .about-story p { color: var(--muted); font-size: 13px; }
@@ -428,7 +428,7 @@ a { color: inherit; text-decoration: none; }
   .request-photo { min-height: 100%; }
   .aside-copy { padding: 18px; }
   .aside-copy .eyebrow { font-size: 7px; }
-  .aside-copy h2 { font-size: 21px; }
+  .request-aside .aside-copy h2 { font-size: clamp(18px, 3.8vw, 20px); }
   .aside-copy > p:not(.eyebrow) { font-size: 10px; }
   .footer-inner { min-height: 58px; padding: 8px 18px; font-size: 8px; }
   .footer-brand-link { min-width: 90px; }
