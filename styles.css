@@ -78,13 +78,6 @@ a { color: inherit; text-decoration: none; }
 .progress-track > div { width: 0; height: 100%; border-radius: inherit; background: var(--sage); transition: width .3s ease; }
 .summary-foot { margin: 8px 0 0; color: var(--muted); font-size: 11px; }
 .rooms-summary .summary-foot { margin-top: 13px; }
-.support-section { margin-top: 32px; }
-.support-summary h3 { margin: 15px 0 4px; color: var(--deep); font: 500 20px/1.2 "Playfair Display", Georgia, serif; }
-.support-summary .summary-foot { max-width: 260px; margin-bottom: 7px; }
-.support-summary { border-color: var(--sage-light); color: var(--ink); background: var(--session-background); }
-.support-summary .summary-label, .support-summary h3 { color: var(--deep); }
-.support-summary .summary-foot { color: var(--muted); }
-.support-summary .text-link { color: var(--deep); }
 .text-link { display: inline-flex; align-items: center; gap: 8px; border: 0; padding: 0; color: var(--deep); background: transparent; cursor: pointer; font-size: 11px; font-weight: 700; }
 .text-link span { color: var(--sage); transition: transform .2s; }
 .text-link:hover span { transform: translateX(3px); }
@@ -255,6 +248,9 @@ a { color: inherit; text-decoration: none; }
 
 .request-layout, .about-layout { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(260px, .8fr); align-items: start; gap: 20px; }
 .request-form { padding: clamp(22px, 4vw, 34px); }
+.request-closing { margin-top: 28px; }
+.request-closing h2 { margin: 0; color: var(--deep); font: 500 22px/1.25 "Playfair Display", Georgia, serif; }
+.request-closing p { margin: 8px 0 0; color: var(--muted); font-size: 13px; }
 .form-heading { margin-bottom: 22px; }
 .form-heading p { margin: 12px 0 0; color: var(--muted); font-size: 12px; }
 .form-heading .enquiry-reassurance { margin-top: 8px; color: var(--deep); font-size: 11px; }
@@ -332,8 +328,6 @@ a { color: inherit; text-decoration: none; }
   .hero-copy { padding: 56px 34px; }
   .content-wrap { padding-right: 22px; padding-left: 22px; }
   .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .support-summary { min-height: auto; }
-  .support-summary .summary-foot { max-width: none; }
   .room-card-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .space-selector-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .checklist-layout { grid-template-columns: minmax(0, 1.3fr) minmax(220px, .7fr); }
@@ -386,9 +380,6 @@ a { color: inherit; text-decoration: none; }
   .metric-caption, .summary-foot { font-size: 9px; }
   .rooms-summary .summary-foot { margin-top: 10px; }
   .summary-card .progress-track { margin: 10px 0 8px; }
-  .support-summary { min-height: auto; }
-  .support-summary h3 { margin-top: 11px; font-size: 19px; }
-  .support-summary .summary-foot { margin: 4px 0 8px; }
   .spaces-heading, .service-heading { margin-top: 34px; }
   .spaces-heading .text-link { font-size: 9px; }
   .room-card-grid { gap: 10px; margin-right: -18px; margin-left: -18px; padding-right: 18px; padding-left: 18px; }
