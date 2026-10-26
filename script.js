@@ -207,11 +207,60 @@ function createTipArticle(tip, headingTag = "h3") {
   return article;
 }
 
+// Tip 1 starts on Monday 26 October 2026 in Europe/London.
+// Compare UK calendar dates, not elapsed local hours, so DST cannot shift a week.
+const TIP_WEEK_START = Date.UTC(2026, 9, 26);
+const TIP_DAY_MS = 24 * 60 * 60 * 1000;
+const tipUkDateTime = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit",
+  hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23"
+});
+
+function getTipUkParts(now) {
+  return Object.fromEntries(tipUkDateTime.formatToParts(now)
+    .filter(part => part.type !== "literal")
+    .map(part => [part.type, Number(part.value)]));
+}
+
+function getScheduledTipIndex(now = new Date()) {
+  const { year, month, day } = getTipUkParts(now);
+  const week = Math.floor((Date.UTC(year, month - 1, day) - TIP_WEEK_START) / (7 * TIP_DAY_MS));
+  return ((week % resettableTips.length) + resettableTips.length) % resettableTips.length;
+}
+
+function getNextTipChange(now = new Date()) {
+  const { year, month, day } = getTipUkParts(now);
+  const ukDay = Date.UTC(year, month - 1, day);
+  const daysSinceMonday = ((ukDay - TIP_WEEK_START) / TIP_DAY_MS % 7 + 7) % 7;
+  const mondayUtc = ukDay + (7 - daysSinceMonday) * TIP_DAY_MS;
+  // At Monday 00:00 UTC, London is either 00:00 GMT or 01:00 BST.
+  // Use the offset at that Monday, rather than today's offset across a DST change.
+  const monday = getTipUkParts(new Date(mondayUtc));
+  const londonAsUtc = Date.UTC(monday.year, monday.month - 1, monday.day,
+    monday.hour, monday.minute, monday.second);
+  return mondayUtc - (londonAsUtc - mondayUtc);
+}
+
+let renderedWeeklyTipNumber = null;
+let weeklyTipTimer = null;
+
+function refreshWeeklyTip() {
+  const now = new Date();
+  const scheduledTip = resettableTips[getScheduledTipIndex(now)];
+  if (renderedWeeklyTipNumber !== scheduledTip.number) {
+    renderTips(scheduledTip);
+    if (discoveredTipNumber === scheduledTip.number) shufflePreviousTip();
+  }
+  clearTimeout(weeklyTipTimer);
+  weeklyTipTimer = setTimeout(refreshWeeklyTip, Math.max(1, getNextTipChange(now) - now.getTime()));
+}
+
 let discoveredTipNumber = null;
 let tipReturnSource = "collection";
 let tipReturnButton = null;
 
 function showTipsCollection(restoreFocus = false) {
+  refreshWeeklyTip();
   document.getElementById("tipsCollection").hidden = false;
   document.getElementById("tipsArchive").hidden = true;
   document.getElementById("tipDetail").hidden = true;
@@ -244,7 +293,9 @@ function returnFromTip() {
 }
 
 function shufflePreviousTip() {
-  const previous = [...resettableTips].sort((a, b) => b.number - a.number).slice(1);
+  const scheduledTip = resettableTips[getScheduledTipIndex()];
+  const previous = [...resettableTips].sort((a, b) => b.number - a.number)
+    .filter(tip => tip.number !== scheduledTip.number);
   const choices = previous.filter(tip => tip.number !== discoveredTipNumber);
   const pool = choices.length ? choices : previous;
   const tip = pool[Math.floor(Math.random() * pool.length)];
@@ -266,14 +317,15 @@ function shufflePreviousTip() {
   container.append(button);
 }
 
-function renderTips() {
+function renderTips(scheduledTip = resettableTips[getScheduledTipIndex()]) {
   const tips = [...resettableTips].sort((a, b) => b.number - a.number);
   const featured = document.getElementById("featuredTip");
   featured.replaceChildren();
-  if (tips[0]) featured.append(createTipArticle(tips[0]));
+  featured.append(createTipArticle(scheduledTip));
+  renderedWeeklyTipNumber = scheduledTip.number;
   const list = document.getElementById("previousTips");
   list.replaceChildren();
-  tips.slice(1).forEach(tip => {
+  tips.filter(tip => tip.number !== scheduledTip.number).forEach(tip => {
     const row = document.createElement("button");
     row.type = "button";
     row.className = "tip-row";
@@ -1758,8 +1810,13 @@ document.getElementById("backToTips").addEventListener("click", returnFromTip);
 document.getElementById("shuffleTip").addEventListener("click", shufflePreviousTip);
 document.getElementById("viewPreviousTips").addEventListener("click", showTipsArchive);
 document.getElementById("backFromArchive").addEventListener("click", () => showTipsCollection(true));
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) refreshWeeklyTip();
+});
+window.addEventListener("pageshow", () => refreshWeeklyTip());
+window.addEventListener("focus", () => refreshWeeklyTip());
 shufflePreviousTip();
-renderTips();
+refreshWeeklyTip();
 renderDashboard();
 renderRoom();
 syncSessionTicker();
