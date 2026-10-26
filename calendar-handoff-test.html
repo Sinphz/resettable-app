@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Calendar Test">
+  <meta name="theme-color" content="#f6f3eb">
+  <title>Resettable Calendar Handoff Test</title>
+  <style>
+    :root { color-scheme: light; font-family: system-ui, sans-serif; color: #1d2b21; background: #f6f3eb; line-height: 1.5; }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 24px 18px max(24px, env(safe-area-inset-bottom)); }
+    main { max-width: 480px; margin: auto; }
+    h1 { font-size: 27px; line-height: 1.2; color: #0f3b27; }
+    h2 { font-size: 18px; }
+    .label { font-size: 12px; font-weight: 700; letter-spacing: .08em; color: #0f3b27; }
+    .panel { padding: 20px; border: 1px solid #dce1d8; border-radius: 18px; background: #fffdf9; }
+    label { display: block; font-weight: 600; margin-bottom: 8px; }
+    input, button, .download { font: inherit; min-height: 48px; border-radius: 12px; }
+    input { width: 100%; min-width: 0; padding: 12px; border: 1px solid #647066; background: white; color: inherit; }
+    button { width: 100%; padding: 12px; border: 0; background: #0f3b27; color: white; cursor: pointer; font-weight: 600; }
+    button:disabled { opacity: .65; cursor: wait; }
+    .download { display: flex; align-items: center; justify-content: center; padding: 12px; border: 1px solid #0f3b27; color: #0f3b27; margin-top: 12px; }
+    :focus-visible { outline: 3px solid #8ea57d; outline-offset: 3px; }
+    .note { font-size: 14px; }
+    #status { overflow-wrap: anywhere; }
+    [hidden] { display: none !important; }
+    li + li { margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="label">ISOLATED PROTOTYPE · TEST EVENT ONLY</p>
+    <h1>Resettable Calendar Test</h1>
+    <p>This page creates a synthetic calendar file. It does not read or change your Reset Schedule or any saved app data.</p>
+    <form id="calendarTestForm" class="panel">
+      <label for="testStart">Test event date and time</label>
+      <input id="testStart" type="datetime-local" step="60" required aria-describedby="timeZone testDetails">
+      <p id="timeZone" class="note"></p>
+      <p id="testDetails" class="note">Duration: 15 minutes. Requested alert: 15 minutes before the start. Choose a time at least 20 minutes ahead to test the alert.</p>
+      <button id="appleCalendar" type="submit">Add to Apple Calendar</button>
+      <a id="downloadCalendar" class="download" hidden>Download test .ics file</a>
+      <p id="status" class="note" role="status" aria-live="polite">Finish importing and saving the event in your calendar. Preparing or sharing a file does not confirm it was added.</p>
+    </form>
+    <p class="note">This is a separate calendar event, not a synchronised Resettable session. Calendar settings may change or ignore the requested alert. Repeated imports may create duplicates.</p>
+    <section aria-labelledby="instructionsTitle">
+      <h2 id="instructionsTitle">Test the handoff and reminder</h2>
+      <ol>
+        <li>Choose a time at least 20 minutes ahead, then tap Add to Apple Calendar.</li>
+        <li>If offered a calendar import, review the title, time, 15-minute duration and 15-minute alert, then save the event. Sharing and downloading options vary by iOS version.</li>
+        <li>If Calendar is not offered, download the file. Apple supports importing .ics attachments from Mail; you can send the test file to yourself using your own mail app. Downloading or saving to Files alone may not offer calendar import.</li>
+        <li>Confirm the event is visible in Calendar and its alert is enabled. Close Resettable and this test page, then lock your phone. The alert should be due 15 minutes before the event, subject to Calendar notifications and Focus settings.</li>
+        <li>Delete all Resettable Calendar Test events from your calendar when finished. Compare Safari and Home Screen mode using the same test page.</li>
+      </ol>
+    </section>
+    <p id="environment" class="note"></p>
+  </main>
+  <script>
+    "use strict";
+
+    function localInputValue(date) {
+      const pad = value => String(value).padStart(2, "0");
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    }
+
+    function parseFutureStart(value, now = new Date()) {
+      const date = new Date(value);
+      if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)
+          || !Number.isFinite(date.getTime()) || localInputValue(date) !== value
+          || date.getTime() <= now.getTime()) {
+        throw new Error("Choose a valid future date and time on this device.");
+      }
+      return date;
+    }
+
+    function calendarText(value) {
+      return value.replace(/\\/g, "\\\\").replace(/\r\n|\r|\n/g, "\\n")
+        .replace(/;/g, "\\;").replace(/,/g, "\\,");
+    }
+
+    // RFC 5545: fold content lines at 75 UTF-8 octets, without splitting characters.
+    function foldCalendarLine(line) {
+      const encoder = new TextEncoder();
+      let result = "", length = 0;
+      for (const character of line) {
+        const bytes = encoder.encode(character).length;
+        if (length + bytes > 75) { result += "\r\n "; length = 1; }
+        result += character;
+        length += bytes;
+      }
+      return result;
+    }
+
+    function buildTestCalendar(start, now = new Date()) {
+      const stamp = date => date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+      const description = "Synthetic test event only. Not linked to Resettable or Reset Schedule. "
+        + "Requested alert: 15 minutes before the event. Delete this event after testing. "
+        + "Changes on the test page do not update a saved calendar event.";
+      const lines = [
+        "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Resettable//Calendar Handoff Test//EN",
+        "CALSCALE:GREGORIAN", "BEGIN:VEVENT",
+        `UID:resettable-calendar-test-${start.getTime()}@resettable.invalid`,
+        `DTSTAMP:${stamp(now)}`, `DTSTART:${stamp(start)}`,
+        `DTEND:${stamp(new Date(start.getTime() + 15 * 60 * 1000))}`,
+        "SUMMARY:Resettable Calendar Test", `DESCRIPTION:${calendarText(description)}`,
+        "BEGIN:VALARM", "ACTION:DISPLAY", "TRIGGER:-PT15M",
+        "DESCRIPTION:Resettable Calendar Test starts in 15 minutes.",
+        "END:VALARM", "END:VEVENT", "END:VCALENDAR"
+      ];
+      return lines.map(foldCalendarLine).join("\r\n") + "\r\n";
+    }
+
+    const form = document.getElementById("calendarTestForm");
+    const input = document.getElementById("testStart");
+    const button = document.getElementById("appleCalendar");
+    const download = document.getElementById("downloadCalendar");
+    const status = document.getElementById("status");
+    let downloadUrl = null;
+
+    function clearDownload() {
+      if (downloadUrl) URL.revokeObjectURL(downloadUrl);
+      downloadUrl = null;
+      download.hidden = true;
+      download.removeAttribute("href");
+    }
+
+    function prepareDownload(file) {
+      clearDownload();
+      downloadUrl = URL.createObjectURL(file);
+      download.href = downloadUrl;
+      download.download = file.name;
+      download.hidden = false;
+    }
+
+    input.value = localInputValue(new Date(Date.now() + 20 * 60 * 1000));
+    document.getElementById("timeZone").textContent = `Times use this device’s timezone: ${Intl.DateTimeFormat().resolvedOptions().timeZone}.`;
+    const standalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+    document.getElementById("environment").textContent = `Mode: ${standalone ? "Home Screen app" : "browser tab"}. Secure connection: ${window.isSecureContext ? "yes" : "no — native file sharing may be unavailable"}.`;
+    input.addEventListener("input", () => {
+      clearDownload();
+      status.textContent = "Date or time changed. Prepare a new file; any previously saved calendar event stays unchanged.";
+    });
+
+    form.addEventListener("submit", async event => {
+      event.preventDefault();
+      let file, start;
+      try {
+        start = parseFutureStart(input.value);
+        file = new File([buildTestCalendar(start)], "resettable-calendar-test.ics", { type: "text/calendar" });
+      } catch (error) {
+        clearDownload();
+        status.textContent = error.message;
+        input.focus();
+        return;
+      }
+      prepareDownload(file);
+      button.disabled = true;
+      input.disabled = true;
+      const alertNote = start.getTime() - Date.now() < 15 * 60 * 1000
+        ? " The requested reminder time has already passed; choose a later event to test the alert." : "";
+      try {
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file] });
+          status.textContent = "File handed to the sharing interface. Finish importing and saving it in Calendar, then check the alert. If needed, use the download link below the button." + alertNote;
+        } else {
+          status.textContent = "Native file sharing is unavailable. Use Download test .ics file below the button, then import and save it in your calendar." + alertNote;
+        }
+      } catch (error) {
+        status.textContent = (error.name === "AbortError"
+          ? "Sharing was cancelled or no suitable destination was available. "
+          : "The file could not be shared. ")
+          + "The download link below the button is available instead. Nothing has been confirmed as added to your calendar." + alertNote;
+      } finally {
+        button.disabled = false;
+        input.disabled = false;
+      }
+    });
+    window.addEventListener("pagehide", clearDownload);
+  </script>
+</body>
+</html>
