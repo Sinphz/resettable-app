@@ -472,91 +472,149 @@ const customSpacesStorageKey = "resettable-custom-spaces-v1";
 const spaceGoalsStorageKey = "resettable-space-goals-v1";
 const resetSessionStorageKey = "resettable-reset-session-v1";
 const resetScheduleStorageKey = "resettable-reset-schedule-v1";
-let resetSchedules = [];
-try {
-  const parsedSchedules = JSON.parse(localStorage.getItem(resetScheduleStorageKey) || "[]");
-  if (Array.isArray(parsedSchedules)) resetSchedules = parsedSchedules.filter(item => isValidScheduleItem(item));
-} catch { resetSchedules = []; }
-let saved = {};
-try {
-  saved = JSON.parse(localStorage.getItem(storageKey) || "{}");
-  if (!saved || typeof saved !== "object" || Array.isArray(saved)) saved = {};
-} catch {
-  saved = {};
+// Safety state is memory-only. Never repair or replace stored data during loading.
+const localDataState = new Map();
+const localSaveFailures = new Set();
+let localDeletionIncomplete = false;
+let localRestoreIncomplete = false;
+
+function sameLocalData(left, right) {
+  if (left === right) return true;
+  if (!left || !right || typeof left !== "object" || typeof right !== "object"
+      || Array.isArray(left) !== Array.isArray(right)) return false;
+  const leftKeys = Object.keys(left);
+  const rightKeys = Object.keys(right);
+  return leftKeys.length === rightKeys.length && leftKeys.every(key =>
+    Object.prototype.hasOwnProperty.call(right, key) && sameLocalData(left[key], right[key]));
 }
+
+function loadLocalData(key, fallback, normalize, validate = () => true) {
+  const state = { status: "unreadable", raw: null };
+  localDataState.set(key, state);
+  try {
+    state.raw = localStorage.getItem(key);
+  } catch {
+    return fallback;
+  }
+  if (state.raw === null) {
+    state.status = "missing";
+    return fallback;
+  }
+  state.status = "invalid";
+  try {
+    const parsed = JSON.parse(state.raw);
+    const loaded = normalize(parsed);
+    // Even readable data must be protected if loading drops or changes anything.
+    if (validate(parsed) && sameLocalData(parsed, loaded)) state.status = "readable";
+    return loaded;
+  } catch {
+    return fallback;
+  }
+}
+
+function canSaveLocalData(key) {
+  const state = localDataState.get(key);
+  const readable = state?.status === "missing" || state?.status === "readable";
+  // Partial custom-space loading cannot establish that dependent data is complete.
+  const dependsOnSpaces = key === spaceGoalsStorageKey || key === resetSessionStorageKey;
+  return readable && (!dependsOnSpaces || canSaveLocalData(customSpacesStorageKey));
+}
+
+function checkLocalDataWrite(key) {
+  const state = localDataState.get(key);
+  if (!canSaveLocalData(key)) {
+    throw new Error("Existing Reset data could not be loaded safely. Reload before saving changes.");
+  }
+  // A different tab or a newly inaccessible store must not be overwritten either.
+  let current;
+  try {
+    current = localStorage.getItem(key);
+  } catch (error) {
+    state.status = "unreadable";
+    throw error;
+  }
+  if (current !== state.raw) {
+    state.status = "invalid";
+    throw new Error("Saved Reset data has changed. Reload before saving changes.");
+  }
+  return state;
+}
+
+function writeLocalData(key, value) {
+  writeLocalDataRaw(key, value === null ? null : JSON.stringify(value));
+}
+
+function writeLocalDataRaw(key, raw) {
+  const state = checkLocalDataWrite(key);
+  if (raw === null) localStorage.removeItem(key);
+  else localStorage.setItem(key, raw);
+  state.raw = raw;
+  state.status = raw === null ? "missing" : "readable";
+}
+
+let resetSchedules = loadLocalData(resetScheduleStorageKey, [], parsed =>
+  Array.isArray(parsed) ? parsed.filter(isValidScheduleItem) : [], parsed =>
+  Array.isArray(parsed) && parsed.every(isValidScheduleItem)
+    && new Set(parsed.map(item => item.id)).size === parsed.length);
+let saved = loadLocalData(storageKey, {}, parsed => isPlainRecord(parsed) ? parsed : {}, parsed =>
+  isPlainRecord(parsed) && Object.entries(parsed).every(([key, done]) =>
+    !["__proto__", "prototype", "constructor"].includes(key) && typeof done === "boolean"));
 
 function createId(prefix) {
   const random = globalThis.crypto?.randomUUID?.() || `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
   return `${prefix}-${random}`;
 }
 
-let customSpaces = [];
-try {
-  const parsed = JSON.parse(localStorage.getItem(customSpacesStorageKey) || "[]");
-  if (Array.isArray(parsed)) customSpaces = parsed
-    .filter(space => space && typeof space.id === "string" && typeof space.name === "string"
-      && categories.some(category => category.id === space.category) && Array.isArray(space.tasks))
-    .map(space => ({
-      id: space.id,
-      name: space.name.slice(0, 60),
-      category: space.category,
-      description: "A space you created, with a checklist made for you.",
-      emoji: "✳",
-      tasks: space.tasks.filter(task => task && typeof task.text === "string" && task.text.trim())
-        .map(task => ({ id: typeof task.id === "string" ? task.id : createId("task"), text: task.text.trim().slice(0, 160), done: Boolean(task.done) }))
-    }));
-} catch {
-  customSpaces = [];
-}
+let customSpaces = loadLocalData(customSpacesStorageKey, [], parsed => Array.isArray(parsed) ? parsed
+  .filter(space => space && typeof space.id === "string" && typeof space.name === "string"
+    && categories.some(category => category.id === space.category) && Array.isArray(space.tasks))
+  .map(space => ({
+    id: space.id,
+    name: space.name.slice(0, 60),
+    category: space.category,
+    description: "A space you created, with a checklist made for you.",
+    emoji: "✳",
+    tasks: space.tasks.filter(task => task && typeof task.text === "string" && task.text.trim())
+      .map(task => ({ id: typeof task.id === "string" ? task.id : createId("task"), text: task.text.trim().slice(0, 160), done: Boolean(task.done) }))
+  })) : [], parsed => {
+    if (!Array.isArray(parsed)) return false;
+    const ids = new Set(rooms.map(room => room.id));
+    return parsed.every(space => {
+      if (!space || !space.id || ids.has(space.id) || !space.name?.trim() || !space.tasks?.length) return false;
+      ids.add(space.id);
+      const taskIds = space.tasks.map(task => task?.id);
+      return taskIds.every(id => typeof id === "string" && id.length > 0)
+        && new Set(taskIds).size === taskIds.length;
+    });
+  });
 
-let spaceGoals = {};
-try {
-  const parsedGoals = JSON.parse(localStorage.getItem(spaceGoalsStorageKey) || "{}");
-  if (parsedGoals && typeof parsedGoals === "object" && !Array.isArray(parsedGoals)) {
-    const validSpaceIds = new Set([...rooms, ...customSpaces].map(space => space.id));
-    for (const [spaceId, goal] of Object.entries(parsedGoals)) {
-      if (validSpaceIds.has(spaceId) && typeof goal === "string" && goal.trim()) {
-        spaceGoals[spaceId] = goal.trim().slice(0, 160);
-      }
-    }
-  }
-} catch {
-  spaceGoals = {};
-}
+let spaceGoals = loadLocalData(spaceGoalsStorageKey, {}, parsed => {
+  if (!isPlainRecord(parsed)) return {};
+  const validSpaceIds = new Set([...rooms, ...customSpaces].map(space => space.id));
+  return Object.fromEntries(Object.entries(parsed)
+    .filter(([spaceId, goal]) => validSpaceIds.has(spaceId) && typeof goal === "string" && goal.trim())
+    .map(([spaceId, goal]) => [spaceId, goal.trim().slice(0, 160)]));
+}, isPlainRecord);
 
 const allowedSessionDurations = [10, 15, 30];
-let resetSession = null;
-try {
-  const parsedSession = JSON.parse(localStorage.getItem(resetSessionStorageKey) || "null");
+let resetSession = loadLocalData(resetSessionStorageKey, null, parsed => {
   const validSpaceIds = new Set([...rooms, ...customSpaces].map(space => space.id));
-  if (parsedSession && typeof parsedSession === "object"
-      && validSpaceIds.has(parsedSession.spaceId)
-      && allowedSessionDurations.includes(parsedSession.durationMinutes)) {
-    if (parsedSession.status === "running" && Number.isFinite(parsedSession.endAt)) {
-      resetSession = {
-        spaceId: parsedSession.spaceId,
-        durationMinutes: parsedSession.durationMinutes,
-        status: "running",
-        endAt: parsedSession.endAt
-      };
-    } else if (parsedSession.status === "paused" && Number.isFinite(parsedSession.remainingMs)) {
-      resetSession = {
-        spaceId: parsedSession.spaceId,
-        durationMinutes: parsedSession.durationMinutes,
-        status: "paused",
-        remainingMs: Math.min(parsedSession.durationMinutes * 60 * 1000, Math.max(0, parsedSession.remainingMs))
-      };
-    } else if (parsedSession.status === "completed") {
-      resetSession = {
-        spaceId: parsedSession.spaceId,
-        durationMinutes: parsedSession.durationMinutes,
-        status: "completed"
-      };
+  if (isPlainRecord(parsed) && validSpaceIds.has(parsed.spaceId)
+      && allowedSessionDurations.includes(parsed.durationMinutes)) {
+    if (parsed.status === "running" && Number.isFinite(parsed.endAt) && parsed.endAt > 0) {
+      return { spaceId: parsed.spaceId, durationMinutes: parsed.durationMinutes, status: "running", endAt: parsed.endAt };
+    }
+    if (parsed.status === "paused" && Number.isFinite(parsed.remainingMs)) {
+      return { spaceId: parsed.spaceId, durationMinutes: parsed.durationMinutes, status: "paused",
+        remainingMs: Math.min(parsed.durationMinutes * 60 * 1000, Math.max(0, parsed.remainingMs)) };
+    }
+    if (parsed.status === "completed") {
+      return { spaceId: parsed.spaceId, durationMinutes: parsed.durationMinutes, status: "completed" };
     }
   }
-} catch {
-  resetSession = null;
-}
+  return null;
+}, parsed => parsed === null || (isPlainRecord(parsed)
+  && (parsed.status !== "paused" || parsed.remainingMs > 0)));
 
 let currentCategory = "home";
 let currentRoom = "kitchen";
@@ -588,7 +646,15 @@ function isValidScheduleItem(item) {
 }
 
 function saveResetSchedules(schedules = resetSchedules) {
-  localStorage.setItem(resetScheduleStorageKey, JSON.stringify(schedules));
+  try {
+    writeLocalData(resetScheduleStorageKey, schedules);
+    localSaveFailures.delete(resetScheduleStorageKey);
+    updateLocalSaveWarning();
+  } catch (error) {
+    localSaveFailures.add(resetScheduleStorageKey);
+    updateLocalSaveWarning();
+    throw error;
+  }
 }
 
 function renderSchedule() {
@@ -628,38 +694,112 @@ function completedCount(room) {
   return room.tasks.reduce((total, _, index) => total + Number(isDone(room, index)), 0);
 }
 
-function saveCustomSpaces() {
+function updateLocalSaveWarning() {
+  const warning = $("#localSaveWarning");
+  if (!warning) return;
+  const labels = new Map([
+    [storageKey, "Checklist progress"], [customSpacesStorageKey, "Custom spaces"],
+    [spaceGoalsStorageKey, "Goals"], [resetSessionStorageKey, "Reset Session"],
+    [resetScheduleStorageKey, "Scheduled resets"]
+  ]);
+  warning.hidden = localSaveFailures.size === 0;
+  const retryMessage = [...localSaveFailures].some(key => !canSaveLocalData(key))
+    ? "Saving is paused on this page to protect existing data."
+    : "Try your change again.";
+  const message = localRestoreIncomplete
+    ? "Restore could not be completed. Some saved data may have changed. Keep this page open and do not reload. Further changes to the affected data cannot be saved."
+    : localDeletionIncomplete
+    ? "The space could not be deleted completely. Some saved data may have changed. Keep this page open and do not reload; the space is still shown here. Further changes to the affected data cannot be saved."
+    : localSaveFailures.size
+      ? `${[...localSaveFailures].map(key => labels.get(key)).join(", ")} could not be saved on this device. ${retryMessage} Any unsaved progress shown here is only on this page and may be lost if you reload or close it. Backups include saved data only.`
+      : "";
+  // Avoid repeating live-region announcements every time the timer renders.
+  if (warning.textContent !== message) warning.textContent = message;
+}
+
+function saveLocalData(key, value) {
   try {
-    localStorage.setItem(customSpacesStorageKey, JSON.stringify(customSpaces));
+    writeLocalData(key, value);
+    localSaveFailures.delete(key);
+    updateLocalSaveWarning();
+    return true;
   } catch {
-    // Keep the checklist usable if this browser blocks local storage.
+    localSaveFailures.add(key);
+    updateLocalSaveWarning();
+    return false;
   }
+}
+
+function saveCustomSpaces() {
+  return saveLocalData(customSpacesStorageKey, customSpaces);
 }
 
 function saveProgress() {
-  try {
-    // Keep old and unknown keys intact; only the task the customer changed is updated.
-    localStorage.setItem(storageKey, JSON.stringify(saved));
-  } catch {
-    // Keep the checklist usable if this browser blocks local storage.
-  }
+  // Keep old and unknown keys intact; only the task the customer changed is updated.
+  return saveLocalData(storageKey, saved);
 }
 
 function saveSpaceGoals() {
-  try {
-    localStorage.setItem(spaceGoalsStorageKey, JSON.stringify(spaceGoals));
-  } catch {
-    // Keep the checklist usable if this browser blocks local storage.
-  }
+  return saveLocalData(spaceGoalsStorageKey, spaceGoals);
 }
 
 function saveResetSession() {
+  return saveLocalData(resetSessionStorageKey, resetSession);
+}
+
+function deleteCustomSpaceData(spaceId) {
+  if (!customSpaces.some(space => space.id === spaceId)) return false;
+  const nextSpaces = customSpaces.filter(space => space.id !== spaceId);
+  const nextGoals = { ...spaceGoals };
+  delete nextGoals[spaceId];
+  const endsSession = resetSession?.spaceId === spaceId;
+  // Save the parent last. Do not publish the deletion in memory until every save succeeds.
+  const changes = [];
+  if (Object.prototype.hasOwnProperty.call(spaceGoals, spaceId)) changes.push([spaceGoalsStorageKey, nextGoals]);
+  if (endsSession) changes.push([resetSessionStorageKey, null]);
+  changes.push([customSpacesStorageKey, nextSpaces]);
+  const deletionKeys = [customSpacesStorageKey, spaceGoalsStorageKey, resetSessionStorageKey];
+  const previous = new Map();
+  const written = [];
   try {
-    if (resetSession) localStorage.setItem(resetSessionStorageKey, JSON.stringify(resetSession));
-    else localStorage.removeItem(resetSessionStorageKey);
+    // Check every affected key before making any changes, retaining Step 2 protections.
+    for (const key of deletionKeys) {
+      previous.set(key, checkLocalDataWrite(key).raw);
+    }
+    for (const [key, value] of changes) {
+      writeLocalData(key, value);
+      written.push([key, localDataState.get(key).raw]);
+    }
   } catch {
-    // Keep the checklist usable if this browser blocks local storage.
+    let rollbackFailed = false;
+    for (const [key, writtenRaw] of written.reverse()) {
+      try {
+        // Never replace a different tab's intervening change during rollback.
+        if (localStorage.getItem(key) !== writtenRaw) throw new Error("Reset data changed during deletion.");
+        const raw = previous.get(key);
+        if (raw === null) localStorage.removeItem(key);
+        else localStorage.setItem(key, raw);
+        const state = localDataState.get(key);
+        state.raw = raw;
+        state.status = raw === null ? "missing" : "readable";
+      } catch {
+        rollbackFailed = true;
+      }
+    }
+    for (const key of deletionKeys) {
+      if (rollbackFailed) localDataState.get(key).status = "invalid";
+      if (!canSaveLocalData(key) || changes.some(([changedKey]) => changedKey === key)) localSaveFailures.add(key);
+    }
+    if (rollbackFailed) localDeletionIncomplete = true;
+    updateLocalSaveWarning();
+    return false;
   }
+  customSpaces = nextSpaces;
+  spaceGoals = nextGoals;
+  if (endsSession) resetSession = null;
+  for (const [key] of changes) localSaveFailures.delete(key);
+  updateLocalSaveWarning();
+  return true;
 }
 
 function updateProgressbar(element, percent) {
@@ -832,14 +972,17 @@ function renderRoom() {
     checkbox.id = id;
     checkbox.checked = isDone(room, index);
     checkbox.addEventListener("change", () => {
+      let persisted;
       if (room.isCustom) {
         const customSpace = customSpaces.find(item => item.id === room.id);
         if (customSpace?.tasks[index]) customSpace.tasks[index].done = checkbox.checked;
-        saveCustomSpaces();
+        persisted = saveCustomSpaces();
       } else {
         saved[`${room.id}-${index}`] = checkbox.checked;
-        saveProgress();
+        persisted = saveProgress();
       }
+      if (!persisted) checkbox.setAttribute("aria-describedby", "localSaveWarning");
+      else checkbox.removeAttribute("aria-describedby");
       refreshProgress();
     });
     const label = document.createElement("label");
@@ -885,7 +1028,11 @@ function renderGoal(space) {
       renderGoal(space);
     });
     actions.append(save, cancel);
-    form.append(label, textarea, actions);
+    const status = document.createElement("p");
+    status.className = "form-status error";
+    status.setAttribute("role", "status");
+    status.setAttribute("aria-live", "polite");
+    form.append(label, textarea, actions, status);
     form.addEventListener("submit", event => {
       event.preventDefault();
       if (!form.reportValidity()) return;
@@ -896,8 +1043,13 @@ function renderGoal(space) {
         textarea.addEventListener("input", () => textarea.setCustomValidity(""), { once: true });
         return;
       }
-      spaceGoals[space.id] = value;
-      saveSpaceGoals();
+      const previousGoals = spaceGoals;
+      spaceGoals = { ...spaceGoals, [space.id]: value };
+      if (!saveSpaceGoals()) {
+        spaceGoals = previousGoals;
+        status.textContent = "Your goal could not be saved. Your draft is still here; try saving again.";
+        return;
+      }
       goalEditorSpaceId = null;
       renderGoal(space);
     });
@@ -944,8 +1096,10 @@ function renderGoal(space) {
   remove.textContent = "Remove goal";
   remove.addEventListener("click", () => {
     if (!window.confirm(`Remove your goal for ${space.name}?`)) return;
+    const previousGoals = spaceGoals;
+    spaceGoals = { ...spaceGoals };
     delete spaceGoals[space.id];
-    saveSpaceGoals();
+    if (!saveSpaceGoals()) spaceGoals = previousGoals;
     renderGoal(space);
   });
   actions.append(edit, remove);
@@ -975,10 +1129,15 @@ function sessionTimeLabel(milliseconds) {
 }
 
 function setSessionState(nextState) {
+  const previousSession = resetSession;
   resetSession = nextState;
-  saveResetSession();
+  const persisted = saveResetSession();
+  // A failed End/Done must leave the controls available to retry the removal.
+  if (!persisted && nextState === null && getSpace(previousSession?.spaceId)) resetSession = previousSession;
+  // Timers remain usable in memory; renderResetSession labels unsaved state.
   syncSessionTicker();
   renderResetSession(getSpace(currentRoom) || rooms[0]);
+  return persisted;
 }
 
 function makeSessionButton(text, className, action, label = text) {
@@ -992,15 +1151,18 @@ function makeSessionButton(text, className, action, label = text) {
 }
 
 function renderResetSession(space) {
+  let sessionPersisted = !localSaveFailures.has(resetSessionStorageKey);
   if (resetSession?.status === "running" && sessionRemainingMs() <= 0) {
     resetSession = { spaceId: resetSession.spaceId, durationMinutes: resetSession.durationMinutes, status: "completed" };
-    saveResetSession();
+    sessionPersisted = saveResetSession();
     syncSessionTicker();
   } else if (resetSession?.status === "paused" && resetSession.remainingMs <= 0) {
     resetSession = { spaceId: resetSession.spaceId, durationMinutes: resetSession.durationMinutes, status: "completed" };
-    saveResetSession();
+    sessionPersisted = saveResetSession();
   }
   const area = $("#resetSessionArea");
+  if (!sessionPersisted) area.setAttribute("aria-describedby", "localSaveWarning");
+  else area.removeAttribute("aria-describedby");
   area.replaceChildren();
   const section = document.createElement("section");
   section.className = "reset-session";
@@ -1272,22 +1434,21 @@ customSpaceForm.addEventListener("submit", event => {
     $("#customSpaceName").focus();
     return;
   }
-  if (existingSpace) {
-    existingSpace.name = name;
-    existingSpace.category = category;
-    existingSpace.tasks = tasks;
-    currentRoom = existingSpace.id;
-  } else {
-    const newSpace = {
-      id: createId("space"), name, category,
-      description: "A space you created, with a checklist made for you.",
-      emoji: "✳", tasks
-    };
-    customSpaces.push(newSpace);
-    currentRoom = newSpace.id;
+  const previousSpaces = customSpaces;
+  const editedSpace = existingSpace
+    ? { ...existingSpace, name, category, tasks }
+    : { id: createId("space"), name, category,
+      description: "A space you created, with a checklist made for you.", emoji: "✳", tasks };
+  customSpaces = existingSpace
+    ? customSpaces.map(space => space.id === existingSpace.id ? editedSpace : space)
+    : [...customSpaces, editedSpace];
+  if (!saveCustomSpaces()) {
+    customSpaces = previousSpaces;
+    $("#customSpaceStatus").textContent = "Your space could not be saved. Your draft is still here; try saving again.";
+    return;
   }
+  currentRoom = editedSpace.id;
   currentCategory = category;
-  saveCustomSpaces();
   spaceDialog.close();
   renderDashboard();
   renderRoom();
@@ -1296,15 +1457,8 @@ customSpaceForm.addEventListener("submit", event => {
 $("#deleteCustomSpace").addEventListener("click", () => {
   const space = customSpaces.find(item => item.id === currentRoom);
   if (!space || !window.confirm(`Delete “${space.name}” and its checklist? This cannot be undone.`)) return;
-  customSpaces = customSpaces.filter(item => item.id !== space.id);
-  saveCustomSpaces();
-  delete spaceGoals[space.id];
-  saveSpaceGoals();
-  if (resetSession?.spaceId === space.id) {
-    resetSession = null;
-    saveResetSession();
-    syncSessionTicker();
-  }
+  if (!deleteCustomSpaceData(space.id)) return;
+  syncSessionTicker();
   currentRoom = categoryRooms(currentCategory)[0]?.id || rooms[0].id;
   renderDashboard();
   renderRoom();
@@ -1391,11 +1545,15 @@ $("#clearRoom").addEventListener("click", () => {
   if (!room || !window.confirm(`Clear completed tasks for ${room.name}?`)) return;
 
   if (room.isCustom) {
-    room.tasks.forEach(task => { task.done = false; });
-    saveCustomSpaces();
+    const previousSpaces = customSpaces;
+    customSpaces = customSpaces.map(space => space.id === room.id
+      ? { ...space, tasks: space.tasks.map(task => ({ ...task, done: false })) } : space);
+    if (!saveCustomSpaces()) customSpaces = previousSpaces;
   } else {
+    const previousProgress = saved;
+    saved = { ...saved };
     room.tasks.forEach((_, index) => delete saved[`${room.id}-${index}`]);
-    saveProgress();
+    if (!saveProgress()) saved = previousProgress;
   }
   renderDashboard();
   renderRoom();
@@ -1507,14 +1665,15 @@ function isPlainRecord(value) {
     && (Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null);
 }
 
-function validateBackupData(data) {
-  const legacyKeys = backupStorageKeys.filter(key => key !== resetScheduleStorageKey);
-  if (!isPlainRecord(data) || (Object.keys(data).length !== backupStorageKeys.length && Object.keys(data).length !== legacyKeys.length)
-      || legacyKeys.some(key => !Object.prototype.hasOwnProperty.call(data, key))
+function validateBackupData(data, version = backupVersion) {
+  if (![1, backupVersion].includes(version)) throw new Error("This backup version is not supported by this app.");
+  const requiredKeys = version === 1
+    ? backupStorageKeys.filter(key => key !== resetScheduleStorageKey) : backupStorageKeys;
+  if (!isPlainRecord(data)
+      || requiredKeys.some(key => !Object.prototype.hasOwnProperty.call(data, key))
       || Object.keys(data).some(key => !backupStorageKeys.includes(key))) {
     throw new Error("This file is missing one or more Reset data sections.");
   }
-  if (!Object.prototype.hasOwnProperty.call(data, resetScheduleStorageKey)) data[resetScheduleStorageKey] = [];
 
   const progress = data[storageKey];
   if (!isPlainRecord(progress) || Object.keys(progress).length > 10000
@@ -1582,7 +1741,7 @@ function validateBackupData(data) {
       throw new Error("The completed session details in this file are not valid.");
     }
   }
-  const schedules = data[resetScheduleStorageKey];
+  const schedules = Object.prototype.hasOwnProperty.call(data, resetScheduleStorageKey) ? data[resetScheduleStorageKey] : [];
   if (!Array.isArray(schedules) || schedules.length > 1000) throw new Error("The scheduled resets in this file are not valid.");
   const scheduleIds = new Set();
   for (const item of schedules) {
@@ -1630,7 +1789,7 @@ function validateBackupFile(parsed) {
     throw new Error("This backup contains unexpected data and can’t be restored.");
   }
   backupTimestamp(parsed.createdAt);
-  return validateBackupData(parsed.data);
+  return validateBackupData(parsed.data, parsed.version);
 }
 
 $("#backupDataButton").addEventListener("click", () => {
@@ -1668,26 +1827,73 @@ $("#restoreDataButton").addEventListener("click", () => {
   restoreFileInput.click();
 });
 
-function restoreSavedData(data) {
-  const previousValues = new Map(backupStorageKeys.map(key => [key, localStorage.getItem(key)]));
+function restoreSavedData(data, version = backupVersion) {
+  // Validate and serialize the complete input before checking or changing storage.
+  validateBackupData(data, version);
+  const restoreKeys = backupStorageKeys.filter(key => Object.prototype.hasOwnProperty.call(data, key));
+  const nextValues = new Map(restoreKeys.map(key => [key, JSON.stringify(data[key])]));
+  const previousValues = new Map();
+  for (const key of restoreKeys) previousValues.set(key, { ...checkLocalDataWrite(key) });
+  const written = [];
   try {
-    for (const key of backupStorageKeys) localStorage.setItem(key, JSON.stringify(data[key]));
-  } catch (error) {
+    for (const key of restoreKeys) {
+      // Retain explicit JSON null in backups without bypassing the normal storage guards.
+      writeLocalDataRaw(key, nextValues.get(key));
+      written.push(key);
+    }
+    for (const key of restoreKeys) {
+      if (localStorage.getItem(key) !== nextValues.get(key)) throw new Error("Restored data could not be verified.");
+    }
+  } catch {
     let rollbackFailed = false;
-    for (const key of backupStorageKeys) {
+    for (const key of written.reverse()) {
       try {
-        const previousValue = previousValues.get(key);
-        if (previousValue === null) localStorage.removeItem(key);
-        else localStorage.setItem(key, previousValue);
+        const previous = previousValues.get(key);
+        const current = localStorage.getItem(key);
+        if (current !== previous.raw) {
+          // Roll back only this attempt's own writes, never an intervening change.
+          if (current !== nextValues.get(key)) throw new Error("Reset data changed during restore.");
+          if (previous.raw === null) localStorage.removeItem(key);
+          else localStorage.setItem(key, previous.raw);
+        }
+        if (localStorage.getItem(key) !== previous.raw) throw new Error("Restore rollback could not be verified.");
+        Object.assign(localDataState.get(key), previous);
+      } catch {
+        rollbackFailed = true;
+      }
+    }
+    // Also check unwritten keys: another tab may have changed one after preflight.
+    for (const key of restoreKeys) {
+      try {
+        if (localStorage.getItem(key) !== previousValues.get(key).raw) rollbackFailed = true;
       } catch {
         rollbackFailed = true;
       }
     }
     if (rollbackFailed) {
-      throw new Error("Restore stopped because the browser ran out of storage. The app tried to restore the previous data; keep this page open and check My Reset before trying again.");
+      // Keep the old in-memory view available, but do not let it overwrite mixed saved data.
+      for (const key of restoreKeys) {
+        localDataState.get(key).status = "invalid";
+        localSaveFailures.add(key);
+      }
+      localRestoreIncomplete = true;
+      updateLocalSaveWarning();
+      throw new Error("Restore could not be completed. Your previous saved data could not be fully restored or verified. Some saved data may have changed. Keep this page open and do not reload. Further changes to the affected data cannot be saved.");
     }
-    throw new Error("Restore could not be saved. Your previous My Reset data has been restored.");
+    throw new Error(written.length
+      ? "Restore could not be saved. The changes made by this restore were rolled back; your previous saved Reset data has been restored."
+      : "Restore could not be saved. No data was changed by this restore.");
   }
+  // The UI still shows the previous in-memory data until reload. Block stale writes in that gap.
+  for (const key of restoreKeys) localDataState.get(key).status = "invalid";
+  return true;
+}
+
+function restoreConfirmationMessage(data, createdAt) {
+  const schedules = Object.prototype.hasOwnProperty.call(data, resetScheduleStorageKey)
+    ? "Reset Schedules will also be replaced."
+    : "This legacy backup has no schedule section. Existing Reset Schedules will be preserved exactly; some may refer to spaces replaced by this backup.";
+  return `Restore the Reset data backed up ${createdAt}? This will replace checklist progress, custom spaces and their checklists, goals and the Reset Session on this device. ${schedules} No other browser data will be changed. Unsaved changes in replaced categories will be lost. A running session keeps its original end time and may already be complete; paused sessions stay paused.`;
 }
 
 restoreFileInput.addEventListener("change", async () => {
@@ -1698,15 +1904,12 @@ restoreFileInput.addEventListener("change", async () => {
     const parsed = JSON.parse(await file.text());
     const data = validateBackupFile(parsed);
     const createdAt = backupTimestamp(parsed.createdAt).toLocaleString();
-    const shouldRestore = window.confirm(
-      `Restore the Reset data backed up ${createdAt}? This will replace the current My Reset data on this device. A running session keeps its original end time and may already be complete; paused sessions stay paused.`
-    );
+    const shouldRestore = window.confirm(restoreConfirmationMessage(data, createdAt));
     if (!shouldRestore) {
       setBackupStatus("Restore cancelled. Your current data has not been changed.");
       return;
     }
-    restoreSavedData(data);
-    window.location.reload();
+    if (restoreSavedData(data, parsed.version)) window.location.reload();
   } catch (error) {
     setBackupStatus(error instanceof Error ? error.message : "This backup could not be restored.", true);
   } finally {
