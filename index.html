@@ -19,6 +19,7 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <script src="script.js?v=reset-schedule-v3" defer></script>
+  <script type="module" src="account.js"></script>
 </head>
 <body>
   <header class="app-header">
@@ -226,6 +227,54 @@
         <div class="data-backup-copy"><span class="pill">YOUR RESET DATA</span><h2 id="dataBackupTitle">Backup &amp; Restore</h2><p>Your progress is saved on this device. Back up your Reset data to a file and keep it somewhere safe.</p></div>
         <div class="data-backup-actions"><button class="button button-soft" type="button" id="backupDataButton">Back Up My Reset</button><button class="button button-soft" type="button" id="restoreDataButton">Restore My Reset</button><input id="restoreFileInput" type="file" accept="application/json,.json" hidden></div>
         <p id="backupRestoreStatus" class="backup-restore-status" role="status" aria-live="polite"></p>
+      </section>
+      <section class="account-panel panel" aria-labelledby="account-title">
+        <p class="eyebrow">OPTIONAL ACCOUNT</p><h2 id="account-title">Your account</h2>
+        <p>Every feature is available as a guest. Signing in keeps you signed in on this browser until you sign out.</p>
+        <p>Your Reset progress stays on this device. It is shared by everyone using this browser, including after switching accounts. Creating an account or signing in does not back up, synchronise or change your progress.</p>
+        <p id="account-message" role="status" aria-live="polite" aria-atomic="true">Loading account tools… You can keep using Resettable as a guest.</p>
+  <fieldset id="account-controls" disabled>
+    <legend>Account tools</legend>
+    <section aria-labelledby="account-status-title">
+      <h2 id="account-status-title">Account status</h2>
+      <p id="account-account-status">Checking sign-in status…</p>
+      <p id="account-verification-status"></p>
+      <div class="actions">
+        <button id="account-verify" type="button" disabled>Send verification email</button>
+        <button id="account-refresh" type="button" disabled>Refresh verification status</button>
+        <button id="account-signout" type="button" disabled>Sign out</button>
+      </div>
+    </section>
+    <section aria-labelledby="account-create-title">
+      <h2 id="account-create-title">Create an account</h2>
+      <form id="account-create-form">
+        <label for="account-create-email">Email</label>
+        <input id="account-create-email" type="email" autocomplete="email" required maxlength="254">
+        <label for="account-create-password">Password</label>
+        <input id="account-create-password" type="password" autocomplete="new-password" minlength="6" required aria-describedby="account-password-help">
+        <p id="account-password-help">At least 6 characters; any stronger Firebase project password policy also applies.</p>
+        <button type="submit">Create account</button>
+      </form>
+    </section>
+    <section aria-labelledby="account-signin-title">
+      <h2 id="account-signin-title">Sign in</h2>
+      <form id="account-signin-form">
+        <label for="account-signin-email">Email</label>
+        <input id="account-signin-email" type="email" autocomplete="username" required maxlength="254">
+        <label for="account-signin-password">Password</label>
+        <input id="account-signin-password" type="password" autocomplete="current-password" required>
+        <button type="submit">Sign in</button>
+      </form>
+    </section>
+    <section aria-labelledby="account-reset-title">
+      <h2 id="account-reset-title">Reset a password</h2>
+      <form id="account-reset-form">
+        <label for="account-reset-email">Email</label>
+        <input id="account-reset-email" type="email" autocomplete="email" required maxlength="254">
+        <button type="submit">Request password-reset email</button>
+      </form>
+    </section>
+  </fieldset>
       </section>
       <button class="panel settings-option" type="button" data-go="about">
         <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/></svg>
