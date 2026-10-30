@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f6f3eb">
+  <script src="appearance.js"></script>
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -25,7 +26,8 @@
   <header class="app-header">
     <div class="header-inner">
       <a class="brand" href="#home" data-view="home" aria-label="Resettable home">
-        <img src="assets/resettable-future-logo.png" alt="Resettable">
+        <img class="logo-light" src="assets/resettable-future-logo.png" alt="Resettable">
+        <span class="logo-dark" role="img" aria-label="Resettable"></span>
         <span>MY RESET</span>
       </a>
       <nav class="topnav" aria-label="Main navigation">
@@ -233,6 +235,11 @@
         <span>My Account</span>
         <svg class="settings-option-chevron" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
       </button>
+      <button class="panel settings-option" type="button" data-go="appearance" id="openAppearance">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18Z"/></svg>
+        <span>Appearance</span>
+        <svg class="settings-option-chevron" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="m9 6 6 6-6 6"/></svg>
+      </button>
       <button class="panel settings-option" type="button" data-go="about">
         <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/></svg>
         <span>About Us</span>
@@ -295,9 +302,22 @@
         </fieldset>
       </section>
     </section>
+    <section id="appearance" class="view content-wrap inner-view" hidden>
+      <div class="settings-topline"><button class="button button-soft settings-back" type="button" data-go="settings" id="appearanceBack"><span aria-hidden="true">←</span> Back to Settings</button></div>
+      <div class="page-intro"><p class="eyebrow">MAKE YOURSELF COMFORTABLE</p><h1 id="appearance-title" tabindex="-1">Appearance</h1><p>Choose how Resettable looks on this device.</p></div>
+      <div class="appearance-panel panel">
+        <fieldset class="appearance-options">
+          <legend>Colour scheme</legend>
+          <label><input type="radio" name="appearance" value="light" checked><span><strong>Light</strong><small>Resettable’s familiar green and cream.</small></span></label>
+          <label><input type="radio" name="appearance" value="dark"><span><strong>Dark</strong><small>Soft dark greens with clear, readable text.</small></span></label>
+          <label><input type="radio" name="appearance" value="system"><span><strong>System</strong><small>Follow your device’s light or dark appearance.</small></span></label>
+        </fieldset>
+        <p id="appearance-status" role="status" aria-live="polite" aria-atomic="true"></p>
+      </div>
+    </section>
   </main>
 
-  <footer class="app-footer"><div class="footer-inner"><span>© Resettable · Organisation &amp; Decluttering</span><a class="footer-brand-link" href="https://resettable.co.uk" target="_blank" rel="noopener" aria-label="Visit resettable.co.uk"><img src="assets/resettable-future-logo.png" alt="Resettable"><span>resettable.co.uk</span></a></div></footer>
+  <footer class="app-footer"><div class="footer-inner"><span>© Resettable · Organisation &amp; Decluttering</span><a class="footer-brand-link" href="https://resettable.co.uk" target="_blank" rel="noopener" aria-label="Visit resettable.co.uk"><img class="logo-light" src="assets/resettable-future-logo.png" alt="Resettable"><span class="logo-dark" role="img" aria-label="Resettable"></span><span>resettable.co.uk</span></a></div></footer>
   <nav class="mobile-nav" aria-label="Mobile navigation">
     <button type="button" data-view="home" class="active"><svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Home</button>
     <button type="button" data-view="rooms"><svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v6h6"/><path d="M21 12a9 9 0 0 0-15-6.7L3 8"/><path d="M21 22v-6h-6"/><path d="M3 12a9 9 0 0 0 15 6.7l3-2.7"/></svg>My Reset</button>

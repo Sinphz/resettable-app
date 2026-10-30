@@ -1473,10 +1473,11 @@ function showView(viewId) {
   if (!view || !view.classList.contains("view")) return;
 
   const returningFromAccount = viewId === "settings" && currentViewId === "account";
+  const returningFromAppearance = viewId === "settings" && currentViewId === "appearance";
   // Returning from a Settings entry keeps Settings' original Back destination.
   if (viewId === "settings" && currentViewId !== "settings"
       && !(currentViewId === "about" && aboutFromSettings)
-      && currentViewId !== "account") settingsReturnView = currentViewId;
+      && currentViewId !== "account" && currentViewId !== "appearance") settingsReturnView = currentViewId;
   if (viewId === "about") aboutFromSettings = currentViewId === "settings";
   $("#aboutSettingsReturn").hidden = !(viewId === "about" && aboutFromSettings);
   currentViewId = viewId;
@@ -1487,7 +1488,7 @@ function showView(viewId) {
   $$('[data-view]').forEach(button => {
     const active = button.dataset.view === viewId;
     button.classList.toggle("active", active);
-    if (button.matches(".topnav button")) {
+    if (button.matches(".topnav button, .mobile-nav button")) {
       if (active) button.setAttribute("aria-current", "page");
       else button.removeAttribute("aria-current");
     }
@@ -1498,6 +1499,8 @@ function showView(viewId) {
   window.scrollTo({ top: 0, behavior: "smooth" });
   if (viewId === "account") document.getElementById("account-title").focus();
   if (returningFromAccount) $("#openAccount").focus();
+  if (viewId === "appearance") document.getElementById("appearance-title").focus();
+  if (returningFromAppearance) $("#openAppearance").focus();
 }
 
 $("#openSettings").addEventListener("click", () => showView("settings"));
