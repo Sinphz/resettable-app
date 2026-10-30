@@ -1474,10 +1474,12 @@ function showView(viewId) {
 
   const returningFromAccount = viewId === "settings" && currentViewId === "account";
   const returningFromAppearance = viewId === "settings" && currentViewId === "appearance";
+  const returningFromDataStorage = viewId === "settings" && currentViewId === "data-storage";
   // Returning from a Settings entry keeps Settings' original Back destination.
   if (viewId === "settings" && currentViewId !== "settings"
       && !(currentViewId === "about" && aboutFromSettings)
-      && currentViewId !== "account" && currentViewId !== "appearance") settingsReturnView = currentViewId;
+      && currentViewId !== "account" && currentViewId !== "appearance"
+      && currentViewId !== "data-storage") settingsReturnView = currentViewId;
   if (viewId === "about") aboutFromSettings = currentViewId === "settings";
   $("#aboutSettingsReturn").hidden = !(viewId === "about" && aboutFromSettings);
   currentViewId = viewId;
@@ -1501,6 +1503,8 @@ function showView(viewId) {
   if (returningFromAccount) $("#openAccount").focus();
   if (viewId === "appearance") document.getElementById("appearance-title").focus();
   if (returningFromAppearance) $("#openAppearance").focus();
+  if (viewId === "data-storage") document.getElementById("dataStorageTitle").focus();
+  if (returningFromDataStorage) $("#openDataStorage").focus();
 }
 
 $("#openSettings").addEventListener("click", () => showView("settings"));
