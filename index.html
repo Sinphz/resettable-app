@@ -228,59 +228,72 @@
         <div class="data-backup-actions"><button class="button button-soft" type="button" id="backupDataButton">Back Up My Reset</button><button class="button button-soft" type="button" id="restoreDataButton">Restore My Reset</button><input id="restoreFileInput" type="file" accept="application/json,.json" hidden></div>
         <p id="backupRestoreStatus" class="backup-restore-status" role="status" aria-live="polite"></p>
       </section>
-      <section class="account-panel panel" aria-labelledby="account-title">
-        <p class="eyebrow">OPTIONAL ACCOUNT</p><h2 id="account-title">Your account</h2>
-        <p>Every feature is available as a guest. Signing in keeps you signed in on this browser until you sign out.</p>
-        <p>Your Reset progress stays on this device. It is shared by everyone using this browser, including after switching accounts. Creating an account or signing in does not back up, synchronise or change your progress.</p>
-        <p id="account-message" role="status" aria-live="polite" aria-atomic="true">Loading account tools… You can keep using Resettable as a guest.</p>
-  <fieldset id="account-controls" disabled>
-    <legend>Account tools</legend>
-    <section aria-labelledby="account-status-title">
-      <h2 id="account-status-title">Account status</h2>
-      <p id="account-account-status">Checking sign-in status…</p>
-      <p id="account-verification-status"></p>
-      <div class="actions">
-        <button id="account-verify" type="button" disabled>Send verification email</button>
-        <button id="account-refresh" type="button" disabled>Refresh verification status</button>
-        <button id="account-signout" type="button" disabled>Sign out</button>
-      </div>
+      <button class="panel settings-option" type="button" data-go="account" id="openAccount">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg>
+        <span>My Account</span>
+        <svg class="settings-option-chevron" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
+      </button>
+      <button class="panel settings-option" type="button" data-go="about">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/></svg>
+        <span>About Us</span>
+        <svg class="settings-option-chevron" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
+      </button>
     </section>
-    <section aria-labelledby="account-create-title">
-      <h2 id="account-create-title">Create an account</h2>
+
+    <section id="account" class="view content-wrap inner-view" hidden>
+      <div class="settings-topline"><button class="button button-soft settings-back" type="button" data-go="settings" id="accountBack"><span aria-hidden="true">←</span> Back to Settings</button></div>
+      <div class="page-intro"><p class="eyebrow">YOUR OPTIONAL ACCOUNT</p><h1 id="account-title" tabindex="-1">My Account</h1><p>Use every feature as a guest, or sign in to your account.</p></div>
+      <section class="account-panel panel" aria-labelledby="account-title">
+        <p class="account-note">Saved progress stays on this device and is not yet synchronised with Firebase accounts. It is shared by everyone using this browser, even after switching accounts.</p>
+        <p id="account-message" role="status" aria-live="polite" aria-atomic="true">Loading account tools… You can keep using Resettable as a guest.</p>
+        <fieldset id="account-controls" disabled>
+          <legend class="visually-hidden">Account tools</legend>
+          <section id="account-profile" aria-labelledby="account-account-status" hidden>
+            <h2 id="account-account-status" tabindex="-1">Checking sign-in status…</h2>
+            <p id="account-verification-status"></p>
+            <div class="actions">
+              <button class="button button-soft" id="account-verify" type="button" disabled>Send verification email</button>
+              <button class="button button-soft" id="account-refresh" type="button" disabled>Refresh verification status</button>
+              <button class="button button-dark" id="account-signout" type="button" disabled>Sign Out</button>
+            </div>
+          </section>
+          <div id="account-guest">
+            <div class="account-tabs" role="tablist" aria-label="Account access">
+              <button id="account-signin-tab" type="button" role="tab" aria-controls="account-signin-panel" aria-selected="true">Sign In</button>
+              <button id="account-create-tab" type="button" role="tab" aria-controls="account-create-panel" aria-selected="false" tabindex="-1">Create Account</button>
+            </div>
+            <section id="account-signin-panel" role="tabpanel" aria-labelledby="account-signin-tab">
+      <form id="account-signin-form">
+        <label for="account-signin-email">Email</label>
+        <input id="account-signin-email" type="email" autocomplete="username" required maxlength="254">
+        <label for="account-signin-password">Password</label>
+        <input id="account-signin-password" type="password" autocomplete="current-password" required>
+        <button class="button button-dark" type="submit">Sign in</button>
+      </form>
+              <button class="account-text-button" id="account-forgot" type="button" aria-expanded="false" aria-controls="account-reset-panel">Forgot your password?</button>
+              <section id="account-reset-panel" aria-labelledby="account-reset-title" hidden>
+                <h2 id="account-reset-title">Reset your password</h2>
+      <form id="account-reset-form">
+        <label for="account-reset-email">Email</label>
+        <input id="account-reset-email" type="email" autocomplete="email" required maxlength="254">
+        <button class="button button-dark" type="submit">Request password-reset email</button>
+      </form>
+              </section>
+            </section>
+            <section id="account-create-panel" role="tabpanel" aria-labelledby="account-create-tab" hidden>
       <form id="account-create-form">
         <label for="account-create-email">Email</label>
         <input id="account-create-email" type="email" autocomplete="email" required maxlength="254">
         <label for="account-create-password">Password</label>
         <input id="account-create-password" type="password" autocomplete="new-password" minlength="6" required aria-describedby="account-password-help">
         <p id="account-password-help">At least 6 characters; any stronger Firebase project password policy also applies.</p>
-        <button type="submit">Create account</button>
+        <button class="button button-dark" type="submit">Create account</button>
       </form>
-    </section>
-    <section aria-labelledby="account-signin-title">
-      <h2 id="account-signin-title">Sign in</h2>
-      <form id="account-signin-form">
-        <label for="account-signin-email">Email</label>
-        <input id="account-signin-email" type="email" autocomplete="username" required maxlength="254">
-        <label for="account-signin-password">Password</label>
-        <input id="account-signin-password" type="password" autocomplete="current-password" required>
-        <button type="submit">Sign in</button>
-      </form>
-    </section>
-    <section aria-labelledby="account-reset-title">
-      <h2 id="account-reset-title">Reset a password</h2>
-      <form id="account-reset-form">
-        <label for="account-reset-email">Email</label>
-        <input id="account-reset-email" type="email" autocomplete="email" required maxlength="254">
-        <button type="submit">Request password-reset email</button>
-      </form>
-    </section>
-  </fieldset>
+            </section>
+            <p class="account-note">You stay signed in on this browser until you sign out.</p>
+          </div>
+        </fieldset>
       </section>
-      <button class="panel settings-option" type="button" data-go="about">
-        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/></svg>
-        <span>About Us</span>
-        <svg class="settings-option-chevron" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
-      </button>
     </section>
   </main>
 

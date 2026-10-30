@@ -4,6 +4,41 @@ const el = id => document.getElementById(`account-${id}`);
 const resetMessage = 'If an eligible account exists for that address, a password-reset email has been requested. Check your inbox and spam folder.';
 let auth;
 let busy = false;
+let selectedTab = 'signin';
+let signedIn = false;
+let pendingFocus;
+
+function selectTab(name, focus = false) {
+  selectedTab = name;
+  for (const kind of ['signin', 'create']) {
+    const selected = kind === name;
+    el(`${kind}-tab`).setAttribute('aria-selected', String(selected));
+    el(`${kind}-tab`).tabIndex = selected ? 0 : -1;
+    el(`${kind}-panel`).hidden = !selected;
+  }
+  el('reset-panel').hidden = true;
+  el('forgot').setAttribute('aria-expanded', 'false');
+  el('create-password').value = '';
+  el('signin-password').value = '';
+  if (focus) el(`${name}-tab`).focus();
+}
+
+// Form navigation is separate from Firebase operations.
+for (const kind of ['signin', 'create']) {
+  el(`${kind}-tab`).addEventListener('click', () => selectTab(kind));
+  el(`${kind}-tab`).addEventListener('keydown', event => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+    event.preventDefault();
+    selectTab(event.key === 'Home' ? 'signin' : event.key === 'End' ? 'create'
+      : selectedTab === 'signin' ? 'create' : 'signin', true);
+  });
+}
+el('forgot').addEventListener('click', () => {
+  const open = el('reset-panel').hidden;
+  el('reset-panel').hidden = !open;
+  el('forgot').setAttribute('aria-expanded', String(open));
+  if (open) el('reset-email').focus();
+});
 
 function message(text, error = false) {
   el('message').textContent = text;
@@ -12,11 +47,23 @@ function message(text, error = false) {
 
 function render() {
   const user = auth?.currentUser;
+  const changed = signedIn !== Boolean(user);
+  const moveFocus = changed && el('controls').contains(document.activeElement);
+  signedIn = Boolean(user);
+  el('profile').hidden = !user;
+  el('guest').hidden = Boolean(user);
+  if (changed) selectTab('signin');
+  if (moveFocus) {
+    const target = user ? 'account-status' : 'signin-tab';
+    if (busy) pendingFocus = target;
+    else el(target).focus();
+  }
   el('account-status').textContent = user ? `Signed in as ${user.email || 'an email account'}.` : 'Using Resettable as a guest.';
   el('verification-status').textContent = user
     ? (user.emailVerified ? 'Email verified.' : 'Email NOT verified. This account is not fully verified. Check your email, then refresh verification status.')
     : 'No signed-in account to verify.';
   el('verify').disabled = !user || user.emailVerified;
+  el('verify').hidden = !user || user.emailVerified;
   el('refresh').disabled = !user;
   el('signout').disabled = !user;
   for (const id of ['create-form', 'signin-form']) {
@@ -58,6 +105,7 @@ async function run(task) {
     busy = false;
     render();
     el('controls').disabled = false;
+    if (pendingFocus) { el(pendingFocus).focus(); pendingFocus = undefined; }
   }
 }
 

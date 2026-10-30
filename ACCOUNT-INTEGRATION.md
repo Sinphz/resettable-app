@@ -1,6 +1,9 @@
 # Optional accounts — local integration
 
-Account tools are in Settings. The full app remains usable as a guest. Account
+Account tools are in Settings → My Account. Sign In and Create Account tabs show
+one form at a time; Forgot your password? expands the reset form. Signed-in users
+see their profile and verification actions. Returning to Settings preserves its
+original Back destination, as with About Us. The full app remains usable as a guest. Account
 creation signs in immediately; verification email is sent only on request.
 Verification is displayed status and does not gate local features.
 
@@ -31,6 +34,7 @@ Run each script with Node (no dependency installation):
 
 ```sh
 node tests/optional-auth.cjs
+node tests/account-navigation.cjs
 node tests/local-data-preservation.cjs
 node tests/local-save-failures.cjs
 node tests/backup-restore.cjs

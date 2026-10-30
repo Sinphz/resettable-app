@@ -1472,9 +1472,11 @@ function showView(viewId) {
   const view = document.getElementById(viewId);
   if (!view || !view.classList.contains("view")) return;
 
-  // Returning from About keeps Settings' original Back destination.
+  const returningFromAccount = viewId === "settings" && currentViewId === "account";
+  // Returning from a Settings entry keeps Settings' original Back destination.
   if (viewId === "settings" && currentViewId !== "settings"
-      && !(currentViewId === "about" && aboutFromSettings)) settingsReturnView = currentViewId;
+      && !(currentViewId === "about" && aboutFromSettings)
+      && currentViewId !== "account") settingsReturnView = currentViewId;
   if (viewId === "about") aboutFromSettings = currentViewId === "settings";
   $("#aboutSettingsReturn").hidden = !(viewId === "about" && aboutFromSettings);
   currentViewId = viewId;
@@ -1494,6 +1496,8 @@ function showView(viewId) {
   if (viewId === "tips") showTipsCollection();
   if (viewId === "rooms") renderRoom();
   window.scrollTo({ top: 0, behavior: "smooth" });
+  if (viewId === "account") document.getElementById("account-title").focus();
+  if (returningFromAccount) $("#openAccount").focus();
 }
 
 $("#openSettings").addEventListener("click", () => showView("settings"));
