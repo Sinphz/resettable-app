@@ -1907,6 +1907,27 @@ function restoreConfirmationMessage(data, createdAt) {
   return `Restore the Reset data backed up ${createdAt}? This will replace checklist progress, custom spaces and their checklists, goals and the Reset Session on this device. ${schedules} No other browser data will be changed. Unsaved changes in replaced categories will be lost. A running session keeps its original end time and may already be complete; paused sessions stay paused.`;
 }
 
+// Narrow interface for manual cloud operations; all writes use the existing restore guards.
+window.resettableProgress = Object.freeze({
+  capture() {
+    if (localSaveFailures.size || localDeletionIncomplete || localRestoreIncomplete) {
+      throw new Error("Some changes could not be saved locally. Resolve the local-save warning before saving or loading cloud progress. File backup remains available for saved data.");
+    }
+    const raw = backupStorageKeys.map(key => checkLocalDataWrite(key).raw);
+    return { raw, backup: { format: backupFormat, version: backupVersion,
+      createdAt: new Date().toISOString(), data: readSavedDataForBackup() } };
+  },
+  assert(snapshot) {
+    if (localSaveFailures.size || localDeletionIncomplete || localRestoreIncomplete
+        || backupStorageKeys.some((key, index) => checkLocalDataWrite(key).raw !== snapshot.raw[index])) {
+      throw new Error("Local progress changed while reviewing the cloud action. Review it and try again.");
+    }
+  },
+  validate: validateBackupFile,
+  confirmation(parsed) { return restoreConfirmationMessage(parsed.data, backupTimestamp(parsed.createdAt).toLocaleString()); },
+  restore(parsed) { validateBackupFile(parsed); return restoreSavedData(parsed.data, parsed.version); }
+});
+
 restoreFileInput.addEventListener("change", async () => {
   const file = restoreFileInput.files?.[0];
   if (!file) return;

@@ -389,6 +389,11 @@ a { color: inherit; text-decoration: none; }
 .backup-restore-status:empty { display: none; }
 .backup-restore-status.error { color: var(--warning-text); }
 .backup-restore-status a { color: var(--deep); font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
+.cloud-progress { grid-template-columns: minmax(0, 1fr); }
+.cloud-progress #cloud-account { margin: 0; color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+.cloud-progress #cloud-signin { justify-self: start; }
+.cloud-progress .data-backup-actions .button { min-height: 44px; white-space: normal; }
+.cloud-progress .button:disabled { opacity: .55; cursor: not-allowed; }
 .about-services .pill { margin-bottom: 10px; }
 .about-process { margin-top: 18px; }
 .about-process-heading { display: flex; align-items: center; gap: 13px; margin-bottom: 15px; }

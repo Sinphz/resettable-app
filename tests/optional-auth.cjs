@@ -3,7 +3,7 @@ const {assert, fixture, storage, app} = require('./local-data-preservation.cjs')
 const fs = require('node:fs');
 const vm = require('node:vm');
 const original = fs.readFileSync(`${__dirname}/../account.js`, 'utf8');
-const source = original.replace(/^import .*;\n/, '').replace(/import\('https:\/\/www.gstatic.com\/firebasejs\/13\.1\.0\/firebase-app.js'\)/, 'Promise.resolve(mockAppSDK)').replace(/import\('https:\/\/www.gstatic.com\/firebasejs\/13\.1\.0\/firebase-auth.js'\)/, 'Promise.resolve(mockSDK)');
+const source = original.replace(/^import .*;\n/gm, '').replace(/import\('https:\/\/www.gstatic.com\/firebasejs\/13\.1\.0\/firebase-app.js'\)/, 'Promise.resolve(mockAppSDK)').replace(/import\('https:\/\/www.gstatic.com\/firebasejs\/13\.1\.0\/firebase-auth.js'\)/, 'Promise.resolve(mockSDK)');
 async function setup(options={}) {
   const store=storage(fixture()), before=[...store.raw], elements=new Map(), calls=[];
   const el=id=>{if(!elements.has(id)) elements.set(id,{value:'',dataset:{},elements:[],events:{},setAttribute(key,value){this[key]=value;},focus(){this.focused=true;},contains(){return false;},addEventListener(type,fn){this.events[type]=fn;}});return elements.get(id);};
@@ -13,7 +13,7 @@ async function setup(options={}) {
     async createUserWithEmailAndPassword(){auth.currentUser={email:'test@example.invalid',emailVerified:false};listener();},
     async signInWithEmailAndPassword(){if(options.signinError) throw {code:options.signinError};auth.currentUser={email:'test@example.invalid',emailVerified:false};listener();},
     async signOut(){auth.currentUser=null;listener();},async sendEmailVerification(){calls.push('verification');},async reload(u){u.emailVerified=true;},async sendPasswordResetEmail(){calls.push('reset');if(options.resetError) throw {code:options.resetError};}};
-  const context=vm.createContext({document:{getElementById:el},localStorage:store,firebaseConfig:{},mockAppSDK:{initializeApp(){if(options.offline) throw Error('offline');return {};}},mockSDK:sdk});
+  const context=vm.createContext({document:{getElementById:el},localStorage:store,firebaseConfig:{},accountSession:{attach(){},fail(){}},mockAppSDK:{initializeApp(){if(options.offline) throw Error('offline');return {};}},mockSDK:sdk});
   vm.runInContext(source,context);
   const settle=async()=>{for(let i=0;i<20;i++) await Promise.resolve();};
   await settle();

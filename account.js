@@ -1,4 +1,5 @@
 import { firebaseConfig } from './account-config.js';
+import { accountSession } from './account-session.js';
 
 const el = id => document.getElementById(`account-${id}`);
 const resetMessage = 'If an eligible account exists for that address, a password-reset email has been requested. Check your inbox and spam folder.';
@@ -121,6 +122,7 @@ async function start() {
   await auth.authStateReady();
   // Do not silently fall back to a session that disappears on refresh.
   await sdk.setPersistence(auth, sdk.indexedDBLocalPersistence);
+  accountSession.attach(auth, sdk);
   auth.languageCode = 'en';
   sdk.onAuthStateChanged(auth, () => render(), () => message('Unable to read account status. Reload and try again.', true));
 
@@ -168,6 +170,7 @@ async function start() {
 }
 
 // Account startup is independent of the main app and its local-save warnings.
-void start().catch(() => {
+void start().catch(error => {
+  accountSession.fail(error);
   message('Account tools are unavailable. You can continue using the entire app as a guest. Check your connection and reload to retry. Your local progress is unaffected.', true);
 });

@@ -1,0 +1,12 @@
+{
+  "name": "resettable-phase3-local-tests",
+  "private": true,
+  "scripts": {
+    "security": "node ../cloud-security.cjs"
+  },
+  "devDependencies": {
+    "@firebase/app": "0.16.4",
+    "@firebase/firestore": "4.19.0"
+  },
+  "engines": { "node": ">=24.12.0" }
+}

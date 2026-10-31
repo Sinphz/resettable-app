@@ -1,5 +1,10 @@
 # Optional accounts — local integration
 
+Phase 3 adds optional manual cloud progress controls using this existing Auth
+session. See [CLOUD-PROGRESS.md](CLOUD-PROGRESS.md) for current behaviour, transaction
+and deletion guarantees, local tests, limits and setup still awaiting approval.
+The sections below describe the original Phase 2 integration.
+
 Account tools are in Settings → My Account. Sign In and Create Account tabs show
 one form at a time; Forgot your password? expands the reset form. Signed-in users
 see their profile and verification actions. Returning to Settings preserves its

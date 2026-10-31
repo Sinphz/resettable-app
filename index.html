@@ -21,6 +21,7 @@
   <link rel="stylesheet" href="styles.css">
   <script src="script.js?v=reset-schedule-v3" defer></script>
   <script type="module" src="account.js"></script>
+  <script type="module" src="cloud-progress.js"></script>
 </head>
 <body>
   <header class="app-header">
@@ -251,7 +252,7 @@
       <div class="settings-topline"><button class="button button-soft settings-back" type="button" data-go="settings" id="accountBack"><span aria-hidden="true">←</span> Back to Settings</button></div>
       <div class="page-intro"><p class="eyebrow">YOUR OPTIONAL ACCOUNT</p><h1 id="account-title" tabindex="-1">My Account</h1><p>Use every feature as a guest, or sign in to your account.</p></div>
       <section class="account-panel panel" aria-labelledby="account-title">
-        <p class="account-note">Saved progress stays on this device and is not yet synchronised with Firebase accounts. It is shared by everyone using this browser, even after switching accounts.</p>
+        <p class="account-note">Progress stays on this device unless you manually save or load a cloud backup in Data &amp; Storage. There is no automatic synchronisation. Local progress is shared by everyone using this browser, even after switching accounts.</p>
         <p id="account-message" role="status" aria-live="polite" aria-atomic="true">Loading account tools… You can keep using Resettable as a guest.</p>
         <fieldset id="account-controls" disabled>
           <legend class="visually-hidden">Account tools</legend>
@@ -322,6 +323,18 @@
         <div class="data-backup-copy"><span class="pill">YOUR RESET DATA</span><h2 id="dataBackupTitle">Backup &amp; Restore</h2><p>Your progress is saved on this device. Back up your Reset data to a file and keep it somewhere safe.</p></div>
         <div class="data-backup-actions"><button class="button button-soft" type="button" id="backupDataButton">Back Up My Reset</button><button class="button button-soft" type="button" id="restoreDataButton">Restore My Reset</button><input id="restoreFileInput" type="file" accept="application/json,.json" hidden></div>
         <p id="backupRestoreStatus" class="backup-restore-status" role="status" aria-live="polite"></p>
+      </section>
+      <section class="data-backup cloud-progress panel" aria-labelledby="cloud-title">
+        <div class="data-backup-copy"><span class="pill">OPTIONAL CLOUD BACKUP</span><h2 id="cloud-title">Cloud Progress</h2><p>Cloud saving is manual. Changes stay on this device until you choose Save to Cloud. Loading replaces this device’s progress after confirmation. Appearance settings stay on this device.</p></div>
+        <p id="cloud-account">Checking account availability. You can continue using Resettable locally.</p>
+        <button class="button button-soft" type="button" id="cloud-signin" data-go="account">Go to My Account</button>
+        <div class="data-backup-actions" id="cloud-actions" aria-busy="false">
+          <button class="button button-soft" type="button" id="cloud-save" disabled>Save to Cloud</button>
+          <button class="button button-soft" type="button" id="cloud-load" disabled>Load from Cloud</button>
+          <button class="button button-soft" type="button" id="cloud-delete" disabled>Delete Cloud Backup</button>
+          <button class="button button-soft" type="button" id="cloud-check" disabled>Check Cloud Backup</button>
+        </div>
+        <p id="cloud-status" class="backup-restore-status" role="status" aria-live="polite" aria-atomic="true"></p>
       </section>
     </section>
   </main>
