@@ -11,6 +11,7 @@ const CORE_FILES = [
   "appearance.js",
   "account.js",
   "account-session.js",
+  "profile-menu.js",
   "cloud-progress.js",
   "cloud-progress-core.js",
   "cloud-store.js",

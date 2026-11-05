@@ -1475,6 +1475,7 @@ function showView(viewId) {
   const returningFromAccount = viewId === "settings" && currentViewId === "account";
   const returningFromAppearance = viewId === "settings" && currentViewId === "appearance";
   const returningFromDataStorage = viewId === "settings" && currentViewId === "data-storage";
+  if (viewId === "account" && currentViewId !== "settings") settingsReturnView = currentViewId;
   // Returning from a Settings entry keeps Settings' original Back destination.
   if (viewId === "settings" && currentViewId !== "settings"
       && !(currentViewId === "about" && aboutFromSettings)
@@ -1507,7 +1508,7 @@ function showView(viewId) {
   if (returningFromDataStorage) $("#openDataStorage").focus();
 }
 
-$("#openSettings").addEventListener("click", () => showView("settings"));
+// The profile menu replaces the old $("#openSettings").addEventListener route.
 $("#settingsBack").addEventListener("click", () => showView(settingsReturnView));
 
 $$('[data-view]').forEach(button => {
@@ -1529,6 +1530,108 @@ $$('[data-category]').forEach(button => {
     showView("request");
   });
 });
+
+$$('[data-reset-level]').forEach(button => {
+  button.addEventListener("click", () => {
+    $("#service").value = button.dataset.resetLevel;
+    showView("request");
+  });
+});
+
+const serviceCarousel = $(".service-detail-grid");
+const servicePaginationLinks = $$(".service-pagination a");
+if (serviceCarousel && servicePaginationLinks.length) {
+  let serviceScrollFrame = 0;
+  const updateServicePagination = () => {
+    serviceScrollFrame = 0;
+    const viewportCenter = serviceCarousel.getBoundingClientRect().left
+      + serviceCarousel.clientLeft + serviceCarousel.clientWidth / 2;
+    let nearestIndex = 0;
+    let nearestDistance = Infinity;
+    $$(".service-detail-card", serviceCarousel).forEach((card, index) => {
+      const bounds = card.getBoundingClientRect();
+      const distance = Math.abs(bounds.left + bounds.width / 2 - viewportCenter);
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestIndex = index;
+      }
+    });
+    servicePaginationLinks.forEach((link, index) => {
+      if (index === nearestIndex) link.setAttribute("aria-current", "true");
+      else link.removeAttribute("aria-current");
+    });
+  };
+
+  serviceCarousel.addEventListener("scroll", () => {
+    if (!serviceScrollFrame) serviceScrollFrame = window.requestAnimationFrame(updateServicePagination);
+  }, { passive: true });
+  servicePaginationLinks.forEach((link, index) => {
+    link.addEventListener("click", event => {
+      event.preventDefault();
+      const card = serviceCarousel.querySelectorAll(".service-detail-card")[index];
+      if (!card) return;
+      const targetLeft = serviceCarousel.scrollLeft + card.getBoundingClientRect().left
+        - serviceCarousel.getBoundingClientRect().left - serviceCarousel.clientLeft;
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      serviceCarousel.scrollTo({ left: targetLeft, behavior: reduceMotion ? "auto" : "smooth" });
+    });
+  });
+}
+
+const resetCarousel = $(".reset-choice-grid");
+const resetCards = resetCarousel ? $$(".reset-choice-card", resetCarousel) : [];
+const resetPaginationButtons = $$(".reset-choice-pagination [data-reset-slide]");
+if (resetCarousel && resetCards.length && resetPaginationButtons.length) {
+  let resetScrollFrame = 0;
+  const updateResetPagination = () => {
+    resetScrollFrame = 0;
+    const viewportCenter = resetCarousel.getBoundingClientRect().left
+      + resetCarousel.clientLeft + resetCarousel.clientWidth / 2;
+    let nearestIndex = 0;
+    let nearestDistance = Infinity;
+    resetCards.forEach((card, index) => {
+      const bounds = card.getBoundingClientRect();
+      const distance = Math.abs(bounds.left + bounds.width / 2 - viewportCenter);
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestIndex = index;
+      }
+    });
+    resetPaginationButtons.forEach((button, index) => {
+      if (index === nearestIndex) button.setAttribute("aria-current", "true");
+      else button.removeAttribute("aria-current");
+    });
+  };
+
+  const scrollToResetCard = index => {
+    const card = resetCards[index];
+    if (!card) return;
+    const targetLeft = resetCarousel.scrollLeft + card.getBoundingClientRect().left
+      - resetCarousel.getBoundingClientRect().left - resetCarousel.clientLeft;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    resetCarousel.scrollTo({ left: targetLeft, behavior: reduceMotion ? "auto" : "smooth" });
+  };
+
+  resetCarousel.addEventListener("scroll", () => {
+    if (!resetScrollFrame) resetScrollFrame = window.requestAnimationFrame(updateResetPagination);
+  }, { passive: true });
+  resetCarousel.addEventListener("keydown", event => {
+    if (!window.matchMedia("(max-width: 640px)").matches) return;
+    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+    const activeIndex = resetPaginationButtons.findIndex(button => button.getAttribute("aria-current") === "true");
+    const nextIndex = event.key === "ArrowRight"
+      ? Math.min(resetCards.length - 1, Math.max(0, activeIndex) + 1)
+      : Math.max(0, Math.max(0, activeIndex) - 1);
+    if (nextIndex !== activeIndex) {
+      event.preventDefault();
+      scrollToResetCard(nextIndex);
+    }
+  });
+  resetPaginationButtons.forEach((button, index) => {
+    button.addEventListener("click", () => scrollToResetCard(index));
+  });
+  window.addEventListener("resize", updateResetPagination, { passive: true });
+}
 
 $("#requestSpaceReset").addEventListener("click", () => {
   const room = getSpace(currentRoom);
@@ -1950,6 +2053,7 @@ restoreFileInput.addEventListener("change", async () => {
 });
 
 const scheduleDialog = $("#scheduleDialog");
+if (scheduleDialog) {
 const scheduleForm = $("#scheduleForm");
 let editingScheduleId = null;
 function localDateTimeValue(value) {
@@ -2019,6 +2123,7 @@ $("#scheduleList").addEventListener("click", event => {
   try { saveResetSchedules(nextSchedules); resetSchedules = nextSchedules; renderSchedule(); }
   catch { window.alert("The change could not be saved on this device. Please try again."); }
 });
+}
 
 window.addEventListener("beforeunload", () => {
   if (backupObjectUrl) URL.revokeObjectURL(backupObjectUrl);
