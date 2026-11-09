@@ -962,6 +962,7 @@ function renderDashboard() {
     card.append(top, title, description, barTrack, explore);
     return card;
   }));
+  refreshDashboardCarousels();
 }
 
 function renderCategoryTabs() {
@@ -1560,9 +1561,48 @@ let currentViewId = "home";
 let settingsReturnView = "home";
 let aboutFromSettings = false;
 
+const mobileNavigation = $(".mobile-nav");
+let lastNavigationScrollY = Math.max(0, window.scrollY);
+let navigationScrollDelta = 0;
+const navigationScrollThreshold = 16;
+
+function setMobileNavigationHidden(hidden) {
+  mobileNavigation?.classList.toggle("is-hidden", hidden);
+}
+
+mobileNavigation?.addEventListener("focusin", () => setMobileNavigationHidden(false));
+window.addEventListener("scroll", () => {
+  if (!mobileNavigation) return;
+  const currentScrollY = Math.max(0, window.scrollY);
+  if (currentScrollY <= 48) {
+    navigationScrollDelta = 0;
+    lastNavigationScrollY = currentScrollY;
+    setMobileNavigationHidden(false);
+    return;
+  }
+
+  const movement = currentScrollY - lastNavigationScrollY;
+  lastNavigationScrollY = currentScrollY;
+  if (!movement) return;
+  navigationScrollDelta = Math.sign(movement) === Math.sign(navigationScrollDelta)
+    ? navigationScrollDelta + movement
+    : movement;
+
+  if (navigationScrollDelta >= navigationScrollThreshold) {
+    setMobileNavigationHidden(true);
+    navigationScrollDelta = 0;
+  } else if (navigationScrollDelta <= -navigationScrollThreshold) {
+    setMobileNavigationHidden(false);
+    navigationScrollDelta = 0;
+  }
+}, { passive: true });
+
 function showView(viewId) {
   const view = document.getElementById(viewId);
   if (!view || !view.classList.contains("view")) return;
+
+  setMobileNavigationHidden(false);
+  navigationScrollDelta = 0;
 
   const returningFromAccount = viewId === "settings" && currentViewId === "account";
   const returningFromAppearance = viewId === "settings" && currentViewId === "appearance";
@@ -1580,6 +1620,7 @@ function showView(viewId) {
   $$(".view").forEach(section => {
     section.hidden = section.id !== viewId;
   });
+  if (viewId === "home") window.requestAnimationFrame(refreshDashboardCarousels);
   $$('[data-view]').forEach(button => {
     const active = button.dataset.view === viewId;
     button.classList.toggle("active", active);
@@ -1629,6 +1670,79 @@ $$('[data-reset-level]').forEach(button => {
     showView("request");
   });
 });
+
+const dashboardCarousels = [
+  { name: "My Reset", track: $("#categoryCards"), pagination: $("#categoryPagination") },
+  { name: "How We Can Help", track: $("#homeServicesCards"), pagination: $("#servicesPagination") }
+].filter(carousel => carousel.track && carousel.pagination);
+
+function refreshDashboardCarousels() {
+  dashboardCarousels.forEach(carousel => {
+    const cards = [...carousel.track.children];
+    const trackBounds = carousel.track.getBoundingClientRect();
+    const maxScroll = Math.max(0, carousel.track.scrollWidth - carousel.track.clientWidth);
+    const positions = [];
+
+    cards.forEach((card, index) => {
+      const cardLeft = card.getBoundingClientRect().left - trackBounds.left - carousel.track.clientLeft;
+      const target = Math.max(0, Math.min(maxScroll, carousel.track.scrollLeft + cardLeft));
+      const existing = positions.find(position => Math.abs(position.target - target) < 2);
+      if (!existing) positions.push({ target, index });
+    });
+
+    carousel.positions = positions;
+    carousel.pagination.hidden = positions.length < 2;
+    carousel.pagination.replaceChildren(...(positions.length < 2 ? [] : positions.map(position => {
+      const dot = document.createElement("button");
+      dot.type = "button";
+      dot.className = "carousel-dot";
+      dot.dataset.carouselTarget = String(position.target);
+      dot.setAttribute("aria-label", `Show ${carousel.name} card ${position.index + 1}`);
+      dot.setAttribute("aria-controls", carousel.track.id);
+      return dot;
+    })));
+    updateDashboardCarouselPagination(carousel);
+  });
+}
+
+function updateDashboardCarouselPagination(carousel) {
+  if (!carousel.positions?.length) return;
+  let activeIndex = 0;
+  let nearestDistance = Infinity;
+  carousel.positions.forEach((position, index) => {
+    const distance = Math.abs(carousel.track.scrollLeft - position.target);
+    if (distance < nearestDistance) {
+      nearestDistance = distance;
+      activeIndex = index;
+    }
+  });
+  carousel.pagination.querySelectorAll(".carousel-dot").forEach((dot, index) => {
+    if (index === activeIndex) dot.setAttribute("aria-current", "true");
+    else dot.removeAttribute("aria-current");
+  });
+}
+
+dashboardCarousels.forEach(carousel => {
+  let scrollFrame = 0;
+  carousel.track.addEventListener("scroll", () => {
+    if (scrollFrame) return;
+    scrollFrame = window.requestAnimationFrame(() => {
+      scrollFrame = 0;
+      updateDashboardCarouselPagination(carousel);
+    });
+  }, { passive: true });
+  carousel.pagination.addEventListener("click", event => {
+    const dot = event.target.closest("button[data-carousel-target]");
+    if (!dot) return;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    carousel.track.scrollTo({
+      left: Number(dot.dataset.carouselTarget),
+      behavior: reduceMotion ? "auto" : "smooth"
+    });
+  });
+});
+
+window.addEventListener("resize", refreshDashboardCarousels, { passive: true });
 
 const serviceCarousel = $(".service-detail-grid");
 const servicePaginationLinks = $$(".service-pagination a");
