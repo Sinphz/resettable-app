@@ -1,6 +1,7 @@
 import { accountSession } from './account-session.js';
 import { createCloudStore } from './cloud-store.js';
 import { createCloudController } from './cloud-progress-core.js';
+import { getSharedFirestore } from './firebase-firestore-client.js';
 
 const element = id => document.getElementById(`cloud-${id}`);
 const actions = ['save', 'load', 'delete', 'check'];
@@ -8,14 +9,8 @@ let storePromise;
 async function getStore() {
   // Lazy loading keeps guest and offline progress independent of the Firebase CDN.
   if (!storePromise) {
-    storePromise = Promise.all([
-      import('https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js'),
-      import('https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js')
-    ]).then(([appSDK, sdk]) => {
-      const app = appSDK.getApp('resettable-optional-account');
-      const db = sdk.initializeFirestore(app, { localCache: sdk.memoryLocalCache() });
-      return createCloudStore(sdk, db);
-    }).catch(error => { storePromise = undefined; throw error; });
+    storePromise = getSharedFirestore().then(({ sdk, db }) => createCloudStore(sdk, db))
+      .catch(error => { storePromise = undefined; throw error; });
   }
   return storePromise;
 }

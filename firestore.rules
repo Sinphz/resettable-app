@@ -27,6 +27,47 @@ service cloud.firestore {
       allow list: if false;
     }
 
+    function ownsChecklist(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    function verifiedChecklistOwner(uid) {
+      return ownsChecklist(uid) && request.auth.token.email_verified == true;
+    }
+
+    function validTaskKey(taskKey) {
+      return taskKey.matches('^(kitchen|bedroom|living|wardrobe|garden|shed|garage|workspace|office-storage|shared-spaces)-[0-4]$');
+    }
+
+    function validChecklistDocument(uid, taskKey, d) {
+      return d.keys().hasAll(['protocol', 'uid', 'taskKey', 'completed', 'revision', 'updatedAt'])
+        && d.keys().hasOnly(['protocol', 'uid', 'taskKey', 'completed', 'revision', 'updatedAt'])
+        && d.protocol == 'resettable-checklist-ticks-v1'
+        && d.uid == uid
+        && d.taskKey == taskKey
+        && d.completed is bool
+        && d.revision is int && d.revision > 0 && d.revision <= 9007199254740991
+        && d.updatedAt is timestamp;
+    }
+
+    match /users/{uid}/checklistSyncV1/{taskKey} {
+      allow get: if verifiedChecklistOwner(uid) && validTaskKey(taskKey);
+      allow list: if verifiedChecklistOwner(uid);
+      allow create: if verifiedChecklistOwner(uid) && validTaskKey(taskKey)
+        && validChecklistDocument(uid, taskKey, request.resource.data)
+        && request.resource.data.revision == 1
+        && request.resource.data.updatedAt == request.time;
+      allow update: if verifiedChecklistOwner(uid) && validTaskKey(taskKey)
+        && validChecklistDocument(uid, taskKey, resource.data)
+        && validChecklistDocument(uid, taskKey, request.resource.data)
+        && request.resource.data.protocol == resource.data.protocol
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.taskKey == resource.data.taskKey
+        && request.resource.data.revision == resource.data.revision + 1
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

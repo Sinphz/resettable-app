@@ -57,7 +57,7 @@ export function createCloudController({ session, getStore, local, confirm, statu
         local.validate(parsed);
       }
       const messages = {
-        save: `${current ? `Replace the cloud backup saved ${date}` : 'Create a cloud backup'} for ${ticket.email} with this device’s saved progress? Local progress is shared by everyone using this browser. Only saved progress is included. This is a manual snapshot, not automatic synchronisation.`,
+        save: `${current ? `Replace the cloud backup saved ${date}` : 'Create a cloud backup'} for ${ticket.email} with this device’s saved progress? Local progress is shared by everyone using this browser. Only saved progress is included. This full-data backup is a manual snapshot.`,
         load: `Load the cloud backup for ${ticket.email}, saved ${date}? ${kind === 'load' ? local.confirmation(parsed) : ''} Consider cancelling and using Back Up My Reset first.`,
         delete: `Delete the cloud backup for ${ticket.email}, saved ${date}? This removes only the cloud copy. Your progress on this device and your Firebase account will remain unchanged.`
       };
@@ -81,7 +81,7 @@ export function createCloudController({ session, getStore, local, confirm, statu
           await store.mutate(ticket.uid, current, kind, next, () => session.assert(ticket));
         });
         session.assert(ticket);
-        status(kind === 'save' ? 'Progress saved to cloud. Later changes stay on this device until you save again.' : 'Cloud backup deleted. Local progress and your Firebase account are unchanged.');
+        status(kind === 'save' ? 'Full-data backup saved to cloud. Later changes outside the 50 built-in checklist ticks need another manual save.' : 'Cloud backup deleted. Local progress and your Firebase account are unchanged.');
       }
     } catch (error) {
       status(cloudError(error, mutationStarted), true);

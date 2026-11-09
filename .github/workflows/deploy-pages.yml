@@ -1,0 +1,51 @@
+name: Deploy Resettable to GitHub Pages
+
+on:
+  workflow_dispatch:
+    inputs:
+      approve_deployment:
+        description: Approve building and deploying the app-only site artifact
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: resettable-github-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build app-only Pages artifact
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out selected release revision
+        uses: actions/checkout@v4
+      - name: Assemble explicit app-only file allowlist
+        run: bash deployment/prepare-pages-artifact.sh "$RUNNER_TEMP/resettable-pages"
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ${{ runner.temp }}/resettable-pages
+
+  deploy:
+    name: Deploy approved app-only artifact
+    if: ${{ inputs.approve_deployment && github.ref == 'refs/heads/main' }}
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      actions: read
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

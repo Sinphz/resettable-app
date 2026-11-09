@@ -1,6 +1,6 @@
 // Bump this release value when preparing a new app release.
 const CACHE_PREFIX = "resettable-app-";
-const CACHE_NAME = `${CACHE_PREFIX}v1.14.0`;
+const CACHE_NAME = `${CACHE_PREFIX}v1.16.0`;
 const SCOPE_URL = new URL(self.registration.scope);
 const SHELL_URL = new URL("./index.html", SCOPE_URL).href;
 
@@ -11,9 +11,18 @@ const CORE_FILES = [
   "appearance.js",
   "account.js",
   "account-session.js",
+  "profile-menu.js",
   "cloud-progress.js",
   "cloud-progress-core.js",
   "cloud-store.js",
+  "firebase-firestore-client.js",
+  "checklist-sync.js",
+  "sync-runtime/phase5-real-checklist-sync.js",
+  "sync-runtime/phase5-checklist-real-firebase.js",
+  "sync-runtime/phase5-checklist-sync.js",
+  "sync-runtime/phase5-checklist-adoption.js",
+  "sync-runtime/phase5-checklist-firestore.js",
+  "progress-reconciliation.js",
   "account-config.js",
   "script.js?v=reset-schedule-v3",
   "manifest.webmanifest",
@@ -41,6 +50,10 @@ const CORE_FILES = [
   "assets/home-card.jpg",
   "assets/outdoor-card.jpg",
   "assets/workspaces-card.jpg",
+  "assets/services/organise.jpg",
+  "assets/services/declutter.jpg",
+  "assets/services/packing-unpacking.jpg",
+  "assets/services/ongoing-support.jpg",
   "assets/icons/icon-192-v3.png",
   "assets/icons/icon-512-v3.png",
   "assets/icons/apple-touch-icon-v3.png"

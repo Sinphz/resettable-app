@@ -8,6 +8,7 @@ export function createAccountSession() {
     get user() { return changing ? null : auth?.currentUser; },
     get ready() { return Boolean(auth) && !failure; },
     get error() { return failure; },
+    get auth() { return this.ready ? auth : null; },
     subscribe(listener) { listeners.add(listener); listener(); return () => listeners.delete(listener); },
     attach(instance, sdk) {
       auth = instance;

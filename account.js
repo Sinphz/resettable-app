@@ -149,6 +149,9 @@ async function start() {
     if (!auth.currentUser) return;
     await sdk.reload(auth.currentUser);
     message(auth.currentUser.emailVerified ? 'Email verified.' : 'Email is still NOT verified. Open the latest verification link, then refresh again.');
+    if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+      window.dispatchEvent(new Event('resettable:verification-refreshed'));
+    }
   }));
   el('signout').addEventListener('click', () => void run(async () => {
     await sdk.signOut(auth);
@@ -166,7 +169,7 @@ async function start() {
   });
   render();
   el('controls').disabled = false;
-  message('Account tools ready. Your Reset progress stays on this device.');
+  message('Account tools ready. My Reset shows built-in checklist sync status.');
 }
 
 // Account startup is independent of the main app and its local-save warnings.

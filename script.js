@@ -356,7 +356,7 @@ const formspreeEndpoint = "https://formspree.io/f/mnpalzwv";
 
 const rooms = [
   {
-    id: "kitchen", category: "home", name: "Kitchen", emoji: "🍃",
+    id: "kitchen", category: "home", name: "Kitchen", emoji: "🍽️",
     description: "A calmer kitchen, one cupboard at a time.",
     tasks: [
       "Clear one countertop",
@@ -367,7 +367,7 @@ const rooms = [
     ]
   },
   {
-    id: "bedroom", category: "home", name: "Bedroom", emoji: "☀️",
+    id: "bedroom", category: "home", name: "Bedroom", emoji: "🛏️",
     description: "Make room for a restful start and end to your day.",
     tasks: [
       "Make the bed",
@@ -411,7 +411,7 @@ const rooms = [
     ]
   },
   {
-    id: "shed", category: "outdoor", name: "Shed", emoji: "🪴",
+    id: "shed", category: "outdoor", name: "Shed", emoji: "🛖",
     description: "Find the things you need in your shed more easily.",
     tasks: [
       "Clear the shed entrance and walkway",
@@ -468,6 +468,8 @@ const rooms = [
 ];
 
 const storageKey = "resettable-checklist-v1";
+const builtInChecklistKeys = Object.freeze(rooms.flatMap(room => room.tasks.map((_, index) => `${room.id}-${index}`)));
+const builtInChecklistKeySet = new Set(builtInChecklistKeys);
 const customSpacesStorageKey = "resettable-custom-spaces-v1";
 const spaceGoalsStorageKey = "resettable-space-goals-v1";
 const resetSessionStorageKey = "resettable-reset-session-v1";
@@ -736,8 +738,94 @@ function saveCustomSpaces() {
 
 function saveProgress() {
   // Keep old and unknown keys intact; only the task the customer changed is updated.
-  return saveLocalData(storageKey, saved);
+  if (!saveLocalData(storageKey, saved)) {
+    reportChecklistSave({ type: "review-required", reason: "local-save-failed" });
+    return false;
+  }
+  try {
+    // A successful setItem call alone does not establish a confirmed save.
+    checkLocalDataWrite(storageKey);
+    return true;
+  } catch {
+    localSaveFailures.add(storageKey);
+    updateLocalSaveWarning();
+    reportChecklistSave({ type: "review-required", reason: "local-save-failed" });
+    return false;
+  }
 }
+
+// Inert local checklist interface. It does not know about accounts or cloud data.
+const checklistSaveListeners = new Set();
+function reportChecklistSave(change) {
+  const event = Object.freeze({ raw: localDataState.get(storageKey).raw, ...change });
+  for (const listener of checklistSaveListeners) {
+    try { listener(event); } catch { /* A subscriber cannot break a local save. */ }
+  }
+}
+function readChecklistStorage() {
+  const state = localDataState.get(storageKey);
+  let raw;
+  try { raw = localStorage.getItem(storageKey); }
+  catch {
+    state.status = "unreadable";
+    localSaveFailures.add(storageKey);
+    updateLocalSaveWarning();
+    return Object.freeze({ raw: undefined, healthy: false, status: state.status, externalChanged: false });
+  }
+  const externalChanged = raw !== state.raw;
+  if (externalChanged) {
+    state.status = "invalid";
+    localSaveFailures.add(storageKey);
+    updateLocalSaveWarning();
+  }
+  return Object.freeze({ raw, healthy: !externalChanged && canSaveLocalData(storageKey)
+    && !localSaveFailures.has(storageKey) && !localDeletionIncomplete && !localRestoreIncomplete,
+    status: state.status, externalChanged });
+}
+window.resettableChecklist = Object.freeze({
+  read: readChecklistStorage,
+  subscribe(listener) {
+    if (typeof listener !== "function") throw new TypeError("A checklist save listener is required.");
+    checklistSaveListeners.add(listener);
+    return () => checklistSaveListeners.delete(listener);
+  },
+  applyCloud(ticks, expectedRaw) {
+    const descriptors = ticks && typeof ticks === "object" && !Array.isArray(ticks)
+      && [Object.prototype, null].includes(Object.getPrototypeOf(ticks))
+      ? Object.getOwnPropertyDescriptors(ticks) : null;
+    if (!descriptors || Reflect.ownKeys(descriptors).length !== builtInChecklistKeys.length
+        || Reflect.ownKeys(descriptors).some(key => !builtInChecklistKeySet.has(key))
+        || builtInChecklistKeys.some(key => !Object.hasOwn(descriptors[key], "value")
+          || typeof descriptors[key].value !== "boolean")) {
+      throw new TypeError("Cloud checklist must contain exactly the built-in boolean ticks.");
+    }
+    const incoming = Object.fromEntries(builtInChecklistKeys.map(key => [key, descriptors[key].value]));
+    if (expectedRaw !== null && typeof expectedRaw !== "string") {
+      throw new TypeError("The exact expected checklist storage value is required.");
+    }
+    const before = readChecklistStorage();
+    if (!before.healthy || before.raw !== expectedRaw) {
+      throw new Error("Checklist progress changed or could not be saved safely.");
+    }
+    const previous = saved;
+    saved = { ...saved };
+    for (const key of builtInChecklistKeys) saved[key] = incoming[key];
+    if (!saveProgress()) {
+      saved = previous;
+      throw new Error("Cloud checklist could not be saved on this device.");
+    }
+    renderDashboard();
+    renderRoom();
+    const after = readChecklistStorage();
+    if (!after.healthy) throw new Error("Checklist progress changed after the cloud ticks were saved.");
+    return after;
+  }
+});
+if (typeof window.addEventListener === "function") window.addEventListener("storage", event => {
+  if (event.key !== null && event.key !== storageKey) return;
+  const state = readChecklistStorage();
+  if (state.externalChanged) reportChecklistSave({ type: "external-change", raw: state.raw });
+});
 
 function saveSpaceGoals() {
   return saveLocalData(spaceGoalsStorageKey, spaceGoals);
@@ -978,8 +1066,12 @@ function renderRoom() {
         if (customSpace?.tasks[index]) customSpace.tasks[index].done = checkbox.checked;
         persisted = saveCustomSpaces();
       } else {
+        const previousRaw = localDataState.get(storageKey).raw;
+        const hadUnsavedChanges = localSaveFailures.has(storageKey);
         saved[`${room.id}-${index}`] = checkbox.checked;
         persisted = saveProgress();
+        if (persisted) reportChecklistSave({ type: "tick", taskKey: `${room.id}-${index}`,
+          completed: checkbox.checked, previousRaw, hadUnsavedChanges });
       }
       if (!persisted) checkbox.setAttribute("aria-describedby", "localSaveWarning");
       else checkbox.removeAttribute("aria-describedby");
@@ -1475,6 +1567,7 @@ function showView(viewId) {
   const returningFromAccount = viewId === "settings" && currentViewId === "account";
   const returningFromAppearance = viewId === "settings" && currentViewId === "appearance";
   const returningFromDataStorage = viewId === "settings" && currentViewId === "data-storage";
+  if (viewId === "account" && currentViewId !== "settings") settingsReturnView = currentViewId;
   // Returning from a Settings entry keeps Settings' original Back destination.
   if (viewId === "settings" && currentViewId !== "settings"
       && !(currentViewId === "about" && aboutFromSettings)
@@ -1507,7 +1600,7 @@ function showView(viewId) {
   if (returningFromDataStorage) $("#openDataStorage").focus();
 }
 
-$("#openSettings").addEventListener("click", () => showView("settings"));
+// The profile menu replaces the old $("#openSettings").addEventListener route.
 $("#settingsBack").addEventListener("click", () => showView(settingsReturnView));
 
 $$('[data-view]').forEach(button => {
@@ -1529,6 +1622,108 @@ $$('[data-category]').forEach(button => {
     showView("request");
   });
 });
+
+$$('[data-reset-level]').forEach(button => {
+  button.addEventListener("click", () => {
+    $("#service").value = button.dataset.resetLevel;
+    showView("request");
+  });
+});
+
+const serviceCarousel = $(".service-detail-grid");
+const servicePaginationLinks = $$(".service-pagination a");
+if (serviceCarousel && servicePaginationLinks.length) {
+  let serviceScrollFrame = 0;
+  const updateServicePagination = () => {
+    serviceScrollFrame = 0;
+    const viewportCenter = serviceCarousel.getBoundingClientRect().left
+      + serviceCarousel.clientLeft + serviceCarousel.clientWidth / 2;
+    let nearestIndex = 0;
+    let nearestDistance = Infinity;
+    $$(".service-detail-card", serviceCarousel).forEach((card, index) => {
+      const bounds = card.getBoundingClientRect();
+      const distance = Math.abs(bounds.left + bounds.width / 2 - viewportCenter);
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestIndex = index;
+      }
+    });
+    servicePaginationLinks.forEach((link, index) => {
+      if (index === nearestIndex) link.setAttribute("aria-current", "true");
+      else link.removeAttribute("aria-current");
+    });
+  };
+
+  serviceCarousel.addEventListener("scroll", () => {
+    if (!serviceScrollFrame) serviceScrollFrame = window.requestAnimationFrame(updateServicePagination);
+  }, { passive: true });
+  servicePaginationLinks.forEach((link, index) => {
+    link.addEventListener("click", event => {
+      event.preventDefault();
+      const card = serviceCarousel.querySelectorAll(".service-detail-card")[index];
+      if (!card) return;
+      const targetLeft = serviceCarousel.scrollLeft + card.getBoundingClientRect().left
+        - serviceCarousel.getBoundingClientRect().left - serviceCarousel.clientLeft;
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      serviceCarousel.scrollTo({ left: targetLeft, behavior: reduceMotion ? "auto" : "smooth" });
+    });
+  });
+}
+
+const resetCarousel = $(".reset-choice-grid");
+const resetCards = resetCarousel ? $$(".reset-choice-card", resetCarousel) : [];
+const resetPaginationButtons = $$(".reset-choice-pagination [data-reset-slide]");
+if (resetCarousel && resetCards.length && resetPaginationButtons.length) {
+  let resetScrollFrame = 0;
+  const updateResetPagination = () => {
+    resetScrollFrame = 0;
+    const viewportCenter = resetCarousel.getBoundingClientRect().left
+      + resetCarousel.clientLeft + resetCarousel.clientWidth / 2;
+    let nearestIndex = 0;
+    let nearestDistance = Infinity;
+    resetCards.forEach((card, index) => {
+      const bounds = card.getBoundingClientRect();
+      const distance = Math.abs(bounds.left + bounds.width / 2 - viewportCenter);
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestIndex = index;
+      }
+    });
+    resetPaginationButtons.forEach((button, index) => {
+      if (index === nearestIndex) button.setAttribute("aria-current", "true");
+      else button.removeAttribute("aria-current");
+    });
+  };
+
+  const scrollToResetCard = index => {
+    const card = resetCards[index];
+    if (!card) return;
+    const targetLeft = resetCarousel.scrollLeft + card.getBoundingClientRect().left
+      - resetCarousel.getBoundingClientRect().left - resetCarousel.clientLeft;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    resetCarousel.scrollTo({ left: targetLeft, behavior: reduceMotion ? "auto" : "smooth" });
+  };
+
+  resetCarousel.addEventListener("scroll", () => {
+    if (!resetScrollFrame) resetScrollFrame = window.requestAnimationFrame(updateResetPagination);
+  }, { passive: true });
+  resetCarousel.addEventListener("keydown", event => {
+    if (!window.matchMedia("(max-width: 640px)").matches) return;
+    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+    const activeIndex = resetPaginationButtons.findIndex(button => button.getAttribute("aria-current") === "true");
+    const nextIndex = event.key === "ArrowRight"
+      ? Math.min(resetCards.length - 1, Math.max(0, activeIndex) + 1)
+      : Math.max(0, Math.max(0, activeIndex) - 1);
+    if (nextIndex !== activeIndex) {
+      event.preventDefault();
+      scrollToResetCard(nextIndex);
+    }
+  });
+  resetPaginationButtons.forEach((button, index) => {
+    button.addEventListener("click", () => scrollToResetCard(index));
+  });
+  window.addEventListener("resize", updateResetPagination, { passive: true });
+}
 
 $("#requestSpaceReset").addEventListener("click", () => {
   const room = getSpace(currentRoom);
@@ -1561,10 +1756,14 @@ $("#clearRoom").addEventListener("click", () => {
       ? { ...space, tasks: space.tasks.map(task => ({ ...task, done: false })) } : space);
     if (!saveCustomSpaces()) customSpaces = previousSpaces;
   } else {
+    const previousRaw = localDataState.get(storageKey).raw;
+    const hadUnsavedChanges = localSaveFailures.has(storageKey);
     const previousProgress = saved;
     saved = { ...saved };
     room.tasks.forEach((_, index) => delete saved[`${room.id}-${index}`]);
     if (!saveProgress()) saved = previousProgress;
+    else reportChecklistSave({ type: "room-clear", roomId: room.id, previousRaw, hadUnsavedChanges,
+      taskKeys: Object.freeze(room.tasks.map((_, index) => `${room.id}-${index}`)) });
   }
   renderDashboard();
   renderRoom();
@@ -1841,6 +2040,7 @@ $("#restoreDataButton").addEventListener("click", () => {
 function restoreSavedData(data, version = backupVersion) {
   // Validate and serialize the complete input before checking or changing storage.
   validateBackupData(data, version);
+  reportChecklistSave({ type: "review-required", reason: "backup-restore" });
   const restoreKeys = backupStorageKeys.filter(key => Object.prototype.hasOwnProperty.call(data, key));
   const nextValues = new Map(restoreKeys.map(key => [key, JSON.stringify(data[key])]));
   const previousValues = new Map();
@@ -1950,6 +2150,7 @@ restoreFileInput.addEventListener("change", async () => {
 });
 
 const scheduleDialog = $("#scheduleDialog");
+if (scheduleDialog) {
 const scheduleForm = $("#scheduleForm");
 let editingScheduleId = null;
 function localDateTimeValue(value) {
@@ -2019,6 +2220,7 @@ $("#scheduleList").addEventListener("click", event => {
   try { saveResetSchedules(nextSchedules); resetSchedules = nextSchedules; renderSchedule(); }
   catch { window.alert("The change could not be saved on this device. Please try again."); }
 });
+}
 
 window.addEventListener("beforeunload", () => {
   if (backupObjectUrl) URL.revokeObjectURL(backupObjectUrl);
