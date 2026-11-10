@@ -449,12 +449,12 @@ a { color: inherit; text-decoration: none; }
 .services-cta .button { flex: 0 0 auto; }
 .request-back { margin: 0 0 15px; }
 
-.app-footer { border-top: 1px solid var(--border-09); background: var(--paper); }
-.footer-inner { display: flex; width: min(1184px, 100%); min-height: 58px; align-items: center; justify-content: space-between; gap: 16px; margin: auto; padding: 10px 28px; color: var(--muted); font-size: 10px; }
-.footer-inner a { color: var(--deep); font-weight: 700; }
-.footer-brand-link { display: flex; min-width: 100px; flex-direction: column; align-items: center; gap: 1px; }
-.footer-brand-link img, .footer-brand-link .logo-dark { width: 88px; height: auto; }
-.footer-brand-link span { font-size: 8px; line-height: 1.2; }
+/* Compact Home sign-off uses the unchanged approved logo. */
+.home-website { display: flex; justify-content: center; margin-top: 28px; }
+.website-brand-link { display: inline-flex; align-items: center; gap: 0; min-height: 44px; padding: 8px 16px; border: 1px solid var(--border-12); border-radius: 14px; background: var(--active-surface); color: #234d37; }
+.website-brand-link img, .website-brand-link .logo-dark { flex: 0 0 auto; width: 104px; height: auto; }
+.website-suffix { margin-top: 5px; font-size: 17px; font-weight: 600; line-height: 1; letter-spacing: -.04em; }
+:root[data-theme="dark"] .website-brand-link { color: var(--deep); }
 .mobile-nav { display: none; }
 
 @media (min-width: 1500px) { .welcome-hero { min-height: 440px; } }
@@ -543,7 +543,7 @@ a { color: inherit; text-decoration: none; }
   .data-backup-actions .button { min-height: 44px; padding: 0 8px; font-size: 9px; }
   body { padding-bottom: calc(67px + env(safe-area-inset-bottom)); }
   html { scroll-padding-bottom: calc(67px + env(safe-area-inset-bottom)); }
-  .app-header { position: relative; }
+  .app-header { position: relative; padding-top: calc(6px + env(safe-area-inset-top, 0px)); }
   .header-inner { min-height: 68px; justify-content: center; padding: 8px 18px; }
   .brand img, .brand .logo-dark { width: 142px; }
   .brand span { font-size: 8px; }
@@ -625,9 +625,6 @@ a { color: inherit; text-decoration: none; }
   .aside-copy .eyebrow { font-size: 7px; }
   .request-aside .aside-copy h2 { font-size: clamp(18px, 3.8vw, 20px); }
   .aside-copy > p:not(.eyebrow) { font-size: 10px; }
-  .footer-inner { min-height: 58px; padding: 8px 18px; font-size: 8px; }
-  .footer-brand-link { min-width: 90px; }
-  .footer-brand-link img, .footer-brand-link .logo-dark { width: 78px; }
 
 }
 @media (max-width: 560px) {
@@ -787,7 +784,6 @@ a { color: inherit; text-decoration: none; }
   .data-backup-copy p { font-size: 13px; }
   .account-panel { width: 100%; max-width: 520px; }
   .account-panel .actions .button { flex: 1 1 180px; white-space: normal; padding-block: 12px; }
-  .footer-inner { flex-wrap: wrap; }
 }
 
 @media (min-width: 641px) and (max-width: 900px) {
@@ -813,11 +809,10 @@ a { color: inherit; text-decoration: none; }
 /* Installed tablet PWAs use the same width rules and respect device insets. */
 @media (min-width: 641px) and (max-width: 1400px) and (display-mode: standalone) {
   .app-header { padding-top: env(safe-area-inset-top); }
-  .content-wrap, .header-inner, .footer-inner {
+  .content-wrap, .header-inner {
     padding-left: max(28px, env(safe-area-inset-left));
     padding-right: max(28px, env(safe-area-inset-right));
   }
-  .app-footer { padding-bottom: env(safe-area-inset-bottom); }
 }
 
 /* Shared bottom navigation uses the same DOM and data-view handlers on all touch layouts. */
@@ -872,7 +867,7 @@ a { color: inherit; text-decoration: none; }
 #appearance-status { font-size: 13px; color: var(--muted); }
 #appearance-status[data-error="true"] { color: var(--warning-text); }
 /* One original silhouette, coloured by the same token as both logo captions. */
-.brand .logo-dark, .footer-brand-link .logo-dark {
+.brand .logo-dark, .website-brand-link .logo-dark {
   display: none;
   aspect-ratio: 614 / 160;
   color: var(--deep);
@@ -881,9 +876,9 @@ a { color: inherit; text-decoration: none; }
   mask: url("assets/resettable-future-logo.png") center / contain no-repeat;
 }
 :root[data-theme="dark"] .brand .logo-light,
-:root[data-theme="dark"] .footer-brand-link .logo-light { display: none; }
+:root[data-theme="dark"] .website-brand-link .logo-light { display: none; }
 :root[data-theme="dark"] .brand .logo-dark,
-:root[data-theme="dark"] .footer-brand-link .logo-dark { display: block; }
+:root[data-theme="dark"] .website-brand-link .logo-dark { display: block; }
 :root[data-theme="dark"] input::placeholder, :root[data-theme="dark"] textarea::placeholder { color: var(--placeholder); }
 :root[data-theme="dark"] .task input { accent-color: var(--accent-fill); }
 :root[data-theme="dark"] .button-dark:hover { color: var(--on-accent); }
